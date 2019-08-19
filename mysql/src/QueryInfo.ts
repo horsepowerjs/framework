@@ -7,6 +7,9 @@ export class QueryInfo {
 
   private _selectQuery: string = ''
   private _updateQuery: string = ''
+  private _deleteQuery: string = ''
+  private _insertQuery: string = ''
+  private _replaceQuery: string = ''
   private _queryType: QueryType = 'select'
 
   private _table?: string
@@ -20,12 +23,13 @@ export class QueryInfo {
   private _having: (DBKeyVal | DBRaw | DBBetween | DBIn | DBNull)[] = []
   private _select: (string | DBRaw | DBMatchAgainst)[] = []
   private _set: (DBKeyVal)[] = []
+  private _dupKeyUp: (DBKeyVal)[] = []
 
-  private _placeholders: DBValue[] = []
-
-  public constructor() {
-
-  }
+  private _selectPlaceholders: DBValue[] = []
+  private _updatePlaceholders: DBValue[] = []
+  private _deletePlaceholders: DBValue[] = []
+  private _insertPlaceholders: DBValue[] = []
+  private _replacePlaceholders: DBValue[] = []
 
   public static analyze(query: string) {
     let q = query.trim()
@@ -41,10 +45,17 @@ export class QueryInfo {
     return info
   }
 
-  public get placeholders() { return this._placeholders }
+  public get selectPlaceholders() { return this._selectPlaceholders }
+  public get updatePlaceholders() { return this._updatePlaceholders }
+  public get deletePlaceholders() { return this._deletePlaceholders }
+  public get insertPlaceholders() { return this._insertPlaceholders }
   public get selectQuery() { return this._selectQuery }
   public get updateQuery() { return this._updateQuery }
-  public get filter() { return this._getFilter(this._where) }
+  public get deleteQuery() { return this._deleteQuery }
+  public get insertQuery() { return this._insertQuery }
+  public get replaceQuery() { return this._replaceQuery }
+
+  // public get filter() { return this._getFilter(this._where) }
   public get queryType() { return this._queryType }
 
   public set table(value: string | undefined) { this._table = value, this._update() }
@@ -73,10 +84,14 @@ export class QueryInfo {
   public addHaving(...value: (DBKeyVal | DBRaw | DBBetween | DBIn | DBNull)[]) { this._having.push(...value), this._update() }
   public addSelect(...value: (string | DBRaw | DBMatchAgainst)[]) { this._select.push(...value), this._update() }
   public addSet(...value: (DBKeyVal)[]) { this._set.push(...value), this._update() }
+  public addDuplicateKeyUpdate(...value: (DBKeyVal)[]) { this._dupKeyUp.push(...value), this._update() }
 
   private _update() {
     this._selectQuery = this._buildSelectString().trim()
     this._updateQuery = this._buildUpdateString().trim()
+    this._deleteQuery = this._buildDeleteString().trim()
+    this._insertQuery = this._buildInsertString().trim()
+    this._replaceQuery = this._buildReplaceString().trim()
     this._queryType = (this._selectQuery.match(/^select|insert|update|delete|replace/i) || ['select'])[0] as QueryType
   }
 
@@ -89,7 +104,7 @@ export class QueryInfo {
   private _buildSelectString(): string {
     // if (!this._table) throw new Error('Table name not set')
 
-    this._placeholders = []
+    this._selectPlaceholders = []
     // Create the column list string
     let columns = this._select.length == 0 ? '*' : this._select.map(i => {
       if (i instanceof DBRaw) return i.value
@@ -97,8 +112,8 @@ export class QueryInfo {
       else if (/\(|\*|,|\)/.test(i)) return i
       return '??'
     }).join(', ')
-    this._placeholders.push(...(<string[]>this._select.filter(i => i instanceof DBRaw || i instanceof DBMatchAgainst || !(/\(|\*|,|\)/.test(i)))))
-    this._placeholders = this._placeholders.reduce<DBValue[]>((arr, itm) => {
+    this._selectPlaceholders.push(...(<string[]>this._select.filter(i => i instanceof DBRaw || i instanceof DBMatchAgainst || !(/\(|\*|,|\)/.test(i)))))
+    this._selectPlaceholders = this._selectPlaceholders.reduce<DBValue[]>((arr, itm) => {
       if (itm instanceof DBMatchAgainst) return arr.concat(itm.columns, itm.search, itm.alias)
       if (itm instanceof DBRaw) return arr.concat(itm.replacements)
       return arr.concat(itm)
@@ -106,29 +121,28 @@ export class QueryInfo {
 
     // Create the initial select string
     let str = [`select ${this._distinct ? 'distinct' : ''} ${columns} from ??`]
-    this._placeholders.push(this._table as string)
+    this._selectPlaceholders.push(this._table as string)
 
     // If there are where items, build the where item list
     if (this._where.length > 0) {
-      let where = this._getFilter(this._where)
+      let where = this._getFilter(this._selectPlaceholders, this._where)
       str.push(`where ${where}`)
     }
 
     // If there is grouping group the items
     if (this._groupBy.length > 0) {
       str.push(`group by ${this._groupBy.map(i => '?? ' + i.sort).join(', ')}`)
-      this._placeholders.push(...this._groupBy.map(i => i.column))
+      this._selectPlaceholders.push(...this._groupBy.map(i => i.column))
     }
 
     if (this._having.length > 0) {
-      let having = this._getFilter(this._having)
+      let having = this._getFilter(this._selectPlaceholders, this._having)
       str.push(`having ${having}`)
     }
 
     // // If there is ordering order the items
     if (this._orderBy.length > 0) {
-      str.push(`order by ${this._orderBy.map(i => '?? ' + i.sort).join(', ')}`)
-      this._placeholders.push(...this._orderBy.map(i => i.column))
+      str.push(this._getOrderBy(this._selectPlaceholders))
     }
 
     // If there is a limit and an offset
@@ -144,27 +158,107 @@ export class QueryInfo {
 
   private _buildUpdateString(): string {
 
-    this._placeholders = []
+    this._updatePlaceholders = []
     let str = ['update']
 
     // Add the table to the query
     str.push('??')
-    this._placeholders.push(this._table as string)
+    this._updatePlaceholders.push(this._table as string)
 
     // If there are where items, build the where item list
     if (this._set.length > 0) {
       this._set.forEach(i => {
-        this.placeholders.push(i.column)
-        this.placeholders.push(i.value)
+        this._updatePlaceholders.push(i.column)
+        this._updatePlaceholders.push(i.value)
       })
-      str.push(`set`)
-      str.push(...this._set.map(() => '?? = ?'))
+      str.push(`set`, this._set.map(() => '?? = ?').join(', '))
     }
 
     // If there are where items, build the where item list
     if (this._where.length > 0) {
-      let where = this._getFilter(this._where)
+      let where = this._getFilter(this._updatePlaceholders, this._where)
       str.push(`where ${where}`)
+    }
+
+    // If there is an order add the order by
+    if (this._orderBy.length > 0) {
+      let order = this._getOrderBy(this._updatePlaceholders)
+      str.push(order)
+    }
+
+    // If there is a limit add the limit
+    if (this._limit && this._limit > 0) {
+      str.push(`limit ${this._limit}`)
+    }
+
+    return str.join(' ')
+  }
+
+  private _buildDeleteString() {
+
+    this._deletePlaceholders = []
+    let str = ['delete from']
+
+    // Add the table to the query
+    str.push('??')
+    this._deletePlaceholders.push(this._table as string)
+
+    // If there are where items, build the where item list
+    if (this._where.length > 0) {
+      let where = this._getFilter(this._deletePlaceholders, this._where)
+      str.push(`where ${where}`)
+    }
+
+    // If there is an order add the order by
+    if (this._orderBy.length > 0) {
+      let order = this._getOrderBy(this._deletePlaceholders)
+      str.push(order)
+    }
+
+    // If there is a limit add the limit
+    if (this._limit && this._limit > 0) {
+      str.push(`limit ${this._limit}`)
+    }
+
+    return str.join(' ')
+  }
+
+  private _buildInsertString() {
+
+    this._insertPlaceholders = []
+    let str = ['insert into']
+
+    // Add the table to the query
+    str.push('??')
+    this._insertPlaceholders.push(this._table as string)
+
+    // If there are settable items, build the set
+    if (this._set.length > 0) {
+      this._set.forEach(i => {
+        this._insertPlaceholders.push(i.column)
+        this._insertPlaceholders.push(i.value)
+      })
+      str.push(`set`, this._set.map(() => '?? = ?').join(', '))
+    }
+
+    return str.join(' ')
+  }
+
+  private _buildReplaceString() {
+
+    this._replacePlaceholders = []
+    let str = ['replace into']
+
+    // Add the table to the query
+    str.push('??')
+    this._replacePlaceholders.push(this._table as string)
+
+    if (this._set.length > 0) {
+      this._set.forEach(i => {
+        this._replacePlaceholders.push(i.column)
+        this._replacePlaceholders.push(i.value)
+      })
+      str.push(`set`, this._set.map(() => '?? = ?').join(', '))
     }
 
     return str.join(' ')
@@ -178,22 +272,22 @@ export class QueryInfo {
    * @returns {string}
    * @memberof DB
    */
-  private _getFilter(filters: any[]): string {
+  private _getFilter(placeholders: DBValue[], filters: any[]): string {
     let filter = filters.map((i, idx) => {
       if (i instanceof DBRaw) {
-        this._placeholders.push(...i.replacements)
+        placeholders.push(...i.replacements)
         return i.value
       } else if (i instanceof DBBetween) {
-        this._placeholders.push(i.column, i.value1, i.value2)
+        placeholders.push(i.column, i.value1, i.value2)
         return `${idx == 0 ? '' : i.type} ?? ${i.not ? 'not' : ''} between ? and ?`
       } else if (i instanceof DBIn) {
-        this._placeholders.push(i.column, ...i.items)
+        placeholders.push(i.column, ...i.items)
         return `${idx == 0 ? '' : i.type} ?? ${i.not ? 'not' : ''} in(${i.items.map(v => '?').join(',')})`
       } else if (i instanceof DBNull) {
-        this._placeholders.push(i.column)
+        placeholders.push(i.column)
         return `${idx == 0 ? '' : i.type} ?? ${i.not ? 'not' : ''} null`
       } else if (i instanceof DBMatchAgainst) {
-        this._placeholders.push(...i.columns, i.search)
+        placeholders.push(...i.columns, i.search)
         let modifier = ''
         switch (i.modifier) {
           case 'natural': modifier = 'in natural language mode'; break;
@@ -204,11 +298,17 @@ export class QueryInfo {
         return `${idx == 0 ? '' : i.type} match (${i.columns.map(() => '??').join(',')}) against (? ${modifier})`
       }
       else if (i instanceof DBKeyVal) {
-        this._placeholders.push(i.column, i.value)
+        placeholders.push(i.column, i.value)
         return `${idx == 0 ? '' : i.type} ?? ${this._operators.includes(i.comp) ? i.comp : '='} ?`.trim()
       }
     })
     return filter.length > 0 ? filter.join(' ') : ''
+  }
+
+  private _getOrderBy(placeholders: DBValue[]) {
+    let str = `order by ${this._orderBy.map(i => '?? ' + i.sort).join(', ')}`
+    placeholders.push(...this._orderBy.map(i => i.column))
+    return str
   }
 
 }

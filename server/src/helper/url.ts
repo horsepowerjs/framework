@@ -1,4 +1,4 @@
-import { Router } from '@red5/router'
+import { Router } from '@horsepower/router'
 
 export function route(name: string, parameters?: { [key: string]: string | number }) {
   let route = Router.findByName(name)

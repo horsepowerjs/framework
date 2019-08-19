@@ -4,7 +4,7 @@
     "declarationDir": "types",
     "baseUrl": ".",
     "paths": {
-      "@red5/server": [
+      "@horsepower/server": [
         "../../server"
       ]
     }

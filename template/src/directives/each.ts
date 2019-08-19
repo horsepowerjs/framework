@@ -2,7 +2,7 @@ import { step, getVariableValues, getScopeData, variableMatch } from '../helpers
 import { Template } from '../helpers/extend'
 import { Mixin } from '../helpers/mixin'
 import { TemplateData } from '..'
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 // <each :="[key, value] in {{$items}}">
 //   <h1>{{$key}} -> {{$value}}</h1>

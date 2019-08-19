@@ -2,7 +2,7 @@ import { Template } from '../helpers/extend';
 import { step, replaceHolders } from '../helpers';
 import { Mixin } from '../helpers/mixin';
 import { TemplateData } from '..';
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 // <case :="{{$item}}">
 //   <when :="1">...</when>

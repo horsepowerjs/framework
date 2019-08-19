@@ -1,4 +1,4 @@
-import { Session } from '@red5/session'
+import { Session } from '@horsepower/session'
 
 interface FormAttributes {
   [key: string]: string | number | boolean | undefined

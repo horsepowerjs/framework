@@ -1,7 +1,7 @@
 {
-    "name": "@red5/router",
+    "name": "@horsepower/router",
     "version": "1.0.7",
-    "description": "Router for the red5 http server.",
+    "description": "Router for the horsepower http server.",
     "main": "lib/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,7 +11,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@red5/server": "^1.0.8"
+        "@horsepower/server": "^1.0.8"
     },
     "files": [
         "lib",

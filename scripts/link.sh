@@ -6,12 +6,12 @@ WARNING: This is for development usage only.
 Execute this file to generate global development links.
 This file will attempt the following:
   - Remove any current global links
-  - Remove all node_modules/@red5 in the source of each module
+  - Remove all node_modules/@horsepower in the source of each module
   - Generate new global links
   - Link all the modules to their dependencies
 '
 
-# npm link @red5/server @red5/router @red5/session @red5/storage @red5/template @red5/mysql @red5/auth @red5/sockets
+# npm link @horsepower/server @horsepower/router @horsepower/session @horsepower/storage @horsepower/template @horsepower/mysql @horsepower/auth @horsepower/sockets
 
 CYAN='\033[0;36m'
 NC='\033[0m'
@@ -23,28 +23,28 @@ cd $SCRIPT_DIR
 cd ..
 ROOT=$SCRIPT_DIR/..
 
-printf "${CYAN}Removing global @red5 packages${NC}\n"
-# npm rm -grf @red5/middleware &
-npm rm -g @red5/router &
-npm rm -g @red5/server &
-npm rm -g @red5/session &
-npm rm -g @red5/storage &
-npm rm -g @red5/template &
-npm rm -g @red5/mysql &
-npm rm -g @red5/auth &
-npm rm -g @red5/sockets &
+printf "${CYAN}Removing global @horsepower packages${NC}\n"
+# npm rm -grf @horsepower/middleware &
+npm rm -g @horsepower/router &
+npm rm -g @horsepower/server &
+npm rm -g @horsepower/session &
+npm rm -g @horsepower/storage &
+npm rm -g @horsepower/template &
+npm rm -g @horsepower/mysql &
+npm rm -g @horsepower/auth &
+npm rm -g @horsepower/sockets &
 wait
 
-printf "${CYAN}Removing node_modules/@red5 from modules${NC}\n"
-# rm -rf ./middleware/node_modules/@red5 &
-rm -rf ./mysql/node_modules/@red5 &
-rm -rf ./router/node_modules/@red5 &
-rm -rf ./server/node_modules/@red5 &
-rm -rf ./storage/node_modules/@red5 &
-rm -rf ./template/node_modules/@red5 &
-rm -rf ./plugins/session/node_modules/@red5 &
-rm -rf ./plugins/auth/node_modules/@red5 &
-rm -rf ./plugins/sockets/node_modules/@red5 &
+printf "${CYAN}Removing node_modules/@horsepower from modules${NC}\n"
+# rm -rf ./middleware/node_modules/@horsepower &
+rm -rf ./mysql/node_modules/@horsepower &
+rm -rf ./router/node_modules/@horsepower &
+rm -rf ./server/node_modules/@horsepower &
+rm -rf ./storage/node_modules/@horsepower &
+rm -rf ./template/node_modules/@horsepower &
+rm -rf ./plugins/session/node_modules/@horsepower &
+rm -rf ./plugins/auth/node_modules/@horsepower &
+rm -rf ./plugins/sockets/node_modules/@horsepower &
 wait
 
 # Generate the links
@@ -64,42 +64,42 @@ npm link ./plugins/sockets
 # that are found in the modules "package.json"
 printf "${CYAN}Linking the dependencies${NC}\n"
 cd $ROOT/server
-npm link @red5/router
-npm link @red5/session
-npm link @red5/storage
-# npm link @red5/middleware
-npm link @red5/server
+npm link @horsepower/router
+npm link @horsepower/session
+npm link @horsepower/storage
+# npm link @horsepower/middleware
+npm link @horsepower/server
 # These modules are optional but may be needed for development.
 # They are not required in the "package.json".
 # The user should manually add them if they need these modules in production.
 # However, we need them for development purposes.
-npm link @red5/template
-npm link @red5/mysql
-npm link @red5/auth
-npm link @red5/sockets
+npm link @horsepower/template
+npm link @horsepower/mysql
+npm link @horsepower/auth
+npm link @horsepower/sockets
 
 cd $ROOT/mysql
-npm link @red5/server
+npm link @horsepower/server
 
 cd $ROOT/router
-# npm link @red5/middleware
-npm link @red5/server
+# npm link @horsepower/middleware
+npm link @horsepower/server
 
 cd $ROOT/template
-npm link @red5/storage
+npm link @horsepower/storage
 
 cd $ROOT/plugins/session
-npm link @red5/server
-npm link @red5/storage
+npm link @horsepower/server
+npm link @horsepower/storage
 
 cd $ROOT/plugins/auth
-npm link @red5/mysql
-npm link @red5/router
-npm link @red5/server
-npm link @red5/session
+npm link @horsepower/mysql
+npm link @horsepower/router
+npm link @horsepower/server
+npm link @horsepower/session
 
 cd $ROOT/plugins/sockets
-npm link @red5/server
+npm link @horsepower/server
 
 # printf "${CYAN}Building packages${NC}\n"
 # cd ..

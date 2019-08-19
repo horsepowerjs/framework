@@ -1,4 +1,4 @@
-import { Collection as BaseCollection } from '@red5/server'
+import { Collection as BaseCollection } from '@horsepower/server'
 import { DBCell } from './DB'
 import { Model, PrimaryKey } from './Model'
 

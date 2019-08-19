@@ -2,7 +2,7 @@ import { Template } from '../helpers/extend';
 import { step } from '../helpers';
 import { Mixin } from '../helpers/mixin';
 import { TemplateData } from '..';
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 // <!-- Root blocks do not have content -->
 // <block name="xxx"></block>

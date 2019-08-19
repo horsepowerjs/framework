@@ -1,5 +1,5 @@
 import { OutgoingHttpHeaders } from 'http'
-import { Router, Route } from '@red5/router'
+import { Router, Route } from '@horsepower/router'
 import { parse } from 'url'
 import { Client } from './Client';
 

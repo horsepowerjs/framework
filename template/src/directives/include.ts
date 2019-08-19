@@ -4,7 +4,7 @@ import { Template } from '../helpers/extend';
 import { fragmentFromFile, step, replaceVariables } from '../helpers';
 import { Mixin } from '../helpers/mixin';
 import { TemplateData } from '..';
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 // <include file="../abc/123"/></include>
 // <require file="../abc/123"/></require>

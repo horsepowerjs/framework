@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { getConfig, log } from '@red5/server'
+import { getConfig, log } from '@horsepower/server'
 import { StorageSettings } from '.'
 import { FileConfiguration } from './drivers/file'
 import { URL } from 'url'

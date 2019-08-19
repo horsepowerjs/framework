@@ -1,7 +1,7 @@
 import { UrlWithStringQuery } from 'url'
 import * as path from 'path'
 import { Route } from './Route'
-import { Middleware, Client, log } from '@red5/server'
+import { Middleware, Client, log } from '@horsepower/server'
 
 export type RequestMethod = 'get' | 'head' | 'post' | 'put' | 'patch' | 'delete' | 'options' | 'any' | 'event'
 

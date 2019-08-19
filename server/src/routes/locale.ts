@@ -1,4 +1,4 @@
-import { Router } from '@red5/router'
+import { Router } from '@horsepower/router'
 import { getConfig } from '../helper'
 import { AppSettings } from '../Server'
 

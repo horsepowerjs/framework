@@ -15,7 +15,7 @@ import caseBlock from '../directives/case'
 import { includeBlock, requireBlock } from '../directives/include'
 import { includeMixin, Mixin } from './mixin'
 import { TemplateData, Nullable } from '..'
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 export * from './files'
 export * from './extend'

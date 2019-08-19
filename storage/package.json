@@ -1,7 +1,7 @@
 {
-    "name": "@red5/storage",
+    "name": "@horsepower/storage",
     "version": "1.0.4",
-    "description": "Storage manager for the red5 http server.",
+    "description": "Storage manager for the horsepower http server.",
     "main": "lib/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",

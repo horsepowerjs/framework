@@ -1,9 +1,9 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import * as helpers from './helper'
-import { Client } from '@red5/server'
-import { Red5Template } from '@red5/template'
-import { Storage } from '@red5/storage'
+import { Client } from '@horsepower/server'
+import { horsepowerTemplate } from '@horsepower/template'
+import { Storage } from '@horsepower/storage'
 
 export interface pug {
   renderFile(path: string, options?: {}, callback?: Function): string
@@ -33,13 +33,13 @@ export class Template {
         get: client.data.getAll,
         post: client.data.postAll,
         request: client.data.requestAll,
-        session: client.session as import('@red5/session').Session,
+        session: client.session as import('@horsepower/session').Session,
         params: client.route.params
       })
       let file = path.join(this._root, filePath)
-      // Render red5 files
+      // Render horsepower files
       if (filePath.endsWith('.mix')) {
-        html = await Red5Template.render(client, options)
+        html = await horsepowerTemplate.render(client, options)
       }
       // Render pug files
       else if (filePath.endsWith('.pug')) {

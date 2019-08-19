@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { Template } from './extend'
 import { JSDOM } from 'jsdom'
-import { Storage } from '@red5/storage'
+import { Storage } from '@horsepower/storage'
 
 export function parseFile(file: string) {
   return new Promise<Template>(async resolve => {

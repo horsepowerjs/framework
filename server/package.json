@@ -1,7 +1,7 @@
 {
-    "name": "@red5/server",
+    "name": "@horsepower/server",
     "version": "1.0.8",
-    "description": "The master server for the red5 http server.",
+    "description": "The master server for the horsepower http server.",
     "main": "lib/index.js",
     "homepage": "https://red5js.com",
     "scripts": {
@@ -9,10 +9,10 @@
         "prepack": "rm -rf lib && rm -rf types && tsc -p ."
     },
     "dependencies": {
-        "@red5/router": "^1.0.7",
-        "@red5/session": "^1.0.5",
-        "@red5/storage": "^1.0.4",
-        "@red5/template": "^1.0.7",
+        "@horsepower/router": "^1.0.7",
+        "@horsepower/session": "^1.0.5",
+        "@horsepower/storage": "^1.0.4",
+        "@horsepower/template": "^1.0.7",
         "@types/command-line-args": "^5.0.0",
         "command-line-args": "^5.1.1",
         "cookie": "^0.4.0",
@@ -31,7 +31,7 @@
     "license": "ISC",
     "repository": {
         "type": "git",
-        "url": "https://github.com/red5-server/framework"
+        "url": "https://github.com/horsepower-server/framework"
     },
     "files": [
         "error-pages",

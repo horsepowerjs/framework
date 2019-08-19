@@ -1,7 +1,7 @@
 {
-    "name": "@red5/auth",
+    "name": "@horsepower/auth",
     "version": "1.0.0",
-    "description": "Authorization for the red5 http server.",
+    "description": "Authorization for the horsepower http server.",
     "main": "lib/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,10 +10,10 @@
     "types": "types/index.d.ts",
     "author": "",
     "dependencies": {
-        "@red5/mysql": "^1.0.0",
-        "@red5/router": "^1.0.7",
-        "@red5/server": "^1.0.8",
-        "@red5/session": "^1.0.5",
+        "@horsepower/mysql": "^1.0.0",
+        "@horsepower/router": "^1.0.7",
+        "@horsepower/server": "^1.0.8",
+        "@horsepower/session": "^1.0.5",
         "bcrypt": "^3.0.6"
     },
     "license": "ISC",

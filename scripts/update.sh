@@ -10,7 +10,7 @@ ROOT=$SCRIPT_DIR/..
 
 printf "cd ${SCRIPT_DIR}\n"
 
-printf "${CYAN}Updating @red5 packages${NC}\n"
+printf "${CYAN}Updating @horsepower packages${NC}\n"
 
 printf "${CYAN}MySQL${NC}\n"
 cd $ROOT/mysql && npm update && npm audit fix

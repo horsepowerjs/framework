@@ -1,5 +1,5 @@
 import { Template } from '../helpers/extend'
-import { Client } from '@red5/server'
+import { Client } from '@horsepower/server'
 
 export default async function (client: Client, root: Template, element: Element) {
   if (element.ownerDocument && client.session) {

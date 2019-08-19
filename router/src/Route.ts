@@ -1,7 +1,7 @@
 import { UrlWithStringQuery } from 'url'
 import * as path from 'path'
 import { RouterOptions, RequestMethod, Router } from './Router'
-import { Middleware } from '@red5/server'
+import { Middleware } from '@horsepower/server'
 
 export class Route {
 

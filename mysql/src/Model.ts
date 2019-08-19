@@ -1,6 +1,6 @@
 import { DB, DBRaw, RowDataPacket, DBCell } from './DB';
 import { Collection } from './Collection'
-import { Collection as BaseCollection, KeyValuePair, get } from '@red5/server'
+import { Collection as BaseCollection, KeyValuePair, get } from '@horsepower/server'
 
 export interface FieldData {
   column: string

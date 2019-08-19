@@ -2,7 +2,7 @@ import { Template } from '../helpers/extend'
 import { step, replaceVariables } from '../helpers'
 import { Mixin } from '../helpers/mixin'
 import { TemplateData } from '..'
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 // <if :="{{$i}} == 0">...</if>
 // <elif :="{{$i}} == 1">...</elif>

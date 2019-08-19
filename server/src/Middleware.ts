@@ -1,5 +1,5 @@
 import { Client, Response, getConfig } from '.'
-import { Route } from '@red5/router'
+import { Route } from '@horsepower/router'
 import { Server } from './Server'
 
 declare type MiddlewareType = 'pre' | 'post' | 'terminate'

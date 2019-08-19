@@ -1,6 +1,6 @@
-import { StorageSettings, Storage } from '@red5/storage'
-import { Client, Response, log, MiddlewareManager } from '@red5/server'
-import { Router } from '@red5/router'
+import { StorageSettings, Storage } from '@horsepower/storage'
+import { Client, Response, log, MiddlewareManager } from '@horsepower/server'
+import { Router } from '@horsepower/router'
 
 import * as http from 'http'
 import * as https from 'https'
@@ -92,7 +92,7 @@ export class Server {
     this.instance.listen(this.app.port, async () => {
       if (!this.app) return
       // Output the config settings
-      console.log(`Red5 is now listening on port "${this.app.port}" (Not yet accepting connections)`)
+      console.log(`horsepower is now listening on port "${this.app.port}" (Not yet accepting connections)`)
 
       // Get configurations
       let views = getConfig<ViewSettings>('view')
@@ -213,18 +213,18 @@ export class Server {
           console.error(`Could not load routes from "${route.routes}":\n  - ${e.message}`)
         }
       }
-      console.log('Red5 is now accepting connections!')
+      console.log('horsepower is now accepting connections!')
     })
   }
 
   public static stop() {
-    console.log('Red5 is shutting down')
+    console.log('horsepower is shutting down')
     this.instance.close((err?: Error) => {
       if (err) {
         console.error(err)
         process.exit(1)
       }
-      console.log('Red5 has shut down')
+      console.log('horsepower has shut down')
       process.exit(0)
     })
   }

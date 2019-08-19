@@ -4,16 +4,19 @@
     "declarationDir": "types",
     "baseUrl": ".",
     "paths": {
-      "@red5/session": [
+      "@horsepower/server": [
+        "."
+      ],
+      "@horsepower/session": [
         "../plugins/session"
       ],
-      "@red5/router": [
+      "@horsepower/router": [
         "../router"
       ],
-      "@red5/storage": [
+      "@horsepower/storage": [
         "../storage"
       ],
-      "@red5/template": [
+      "@horsepower/template": [
         "../template"
       ]
     }

@@ -4,9 +4,9 @@ import * as querystring from 'querystring'
 import { parse as parseCookie } from 'cookie'
 import { IncomingMessage, IncomingHttpHeaders } from 'http'
 
-import { RequestMethod, Route } from '@red5/router'
-import { Response, getConfig, AppSettings } from '@red5/server'
-import { Storage, FileStorage } from '@red5/storage'
+import { RequestMethod, Route } from '@horsepower/router'
+import { Response, getConfig, AppSettings } from '@horsepower/server'
+import { Storage, FileStorage } from '@horsepower/storage'
 import { collect } from './util';
 
 export interface FileType {
@@ -25,7 +25,7 @@ export interface FileType {
    */
   filename: string
   /**
-   * The full location of the tmp file `/tmp/dir/red5/uploads/xxxyyyzzz.tmp`
+   * The full location of the tmp file `/tmp/dir/horsepower/uploads/xxxyyyzzz.tmp`
    *
    * @type {string}
    * @memberof FileType
@@ -39,7 +39,7 @@ export interface FileType {
    */
   tmpFilename: string
   /**
-   * The location of the tmp file relative to the storage disk's root `/red5/uploads/xxxyyyzzz.tmp`
+   * The location of the tmp file relative to the storage disk's root `/horsepower/uploads/xxxyyyzzz.tmp`
    *
    * @type {string}
    * @memberof FileType
@@ -65,7 +65,7 @@ export class Client {
   // private _helpers: Helpers = {}
 
   public route!: Route
-  public session?: import('@red5/session').Session
+  public session?: import('@horsepower/session').Session
 
   public get request() { return this._req }
 
@@ -92,8 +92,8 @@ export class Client {
    */
   public async init() {
     try {
-      if (!this.session && require.resolve('@red5/session')) {
-        let sess = await import('@red5/session')
+      if (!this.session && require.resolve('@horsepower/session')) {
+        let sess = await import('@horsepower/session')
         this.session = new sess.Session(<any>this)
       }
     } catch (e) { }
@@ -129,7 +129,7 @@ export class Client {
           // If a filename was found, this item must be from a file upload
           if (result.filename.length > 0) {
             // Creates a temporary filename to store the upload
-            let temp = path.posix.join('red5', 'uploads', (Math.random() * 10000).toString(12).substr(5, 10) + '.tmp')
+            let temp = path.posix.join('horsepower', 'uploads', (Math.random() * 10000).toString(12).substr(5, 10) + '.tmp')
             let [/* fullMatch */, /* newlines */, file] = Array.from(item.match(/^.+?(\r\n\r\n|\n\n)(.+)/s) || [])
             if (file) {
               // Write the file to the temp directory

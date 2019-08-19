@@ -1,5 +1,5 @@
 import { Template } from '../helpers/extend'
-import { Client, Lang } from '@red5/server'
+import { Client, Lang } from '@horsepower/server'
 import { TemplateData } from '..'
 import { replaceVariables } from '../helpers'
 

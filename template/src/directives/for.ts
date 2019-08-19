@@ -2,7 +2,7 @@ import { step, getVariableValues, getScopeData } from '../helpers'
 import { Template } from '../helpers/extend'
 import { Mixin } from '../helpers/mixin';
 import { TemplateData } from '..';
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 // <for :="i from 10 through 15">{{$i}}</for> <!-- 10,11,12,13,14,15 -->
 // <for :="i from 10 thru 15">{{$i}}</for>    <!-- 10,11,12,13,14,15 -->

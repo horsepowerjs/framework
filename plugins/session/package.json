@@ -1,7 +1,7 @@
 {
-    "name": "@red5/session",
+    "name": "@horsepower/session",
     "version": "1.0.5",
-    "description": "Session management for the red5 http server.",
+    "description": "Session management for the horsepower http server.",
     "main": "lib/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,8 +11,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@red5/server": "^1.0.8",
-        "@red5/storage": "^1.0.4",
+        "@horsepower/server": "^1.0.8",
+        "@horsepower/storage": "^1.0.4",
         "cookie": "^0.3.1",
         "crypto": "^1.0.1"
     },

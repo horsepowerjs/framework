@@ -1,5 +1,5 @@
 import * as mysql from 'mysql'
-import { configPath, getConfig, log } from '@red5/server'
+import { configPath, getConfig, log } from '@horsepower/server'
 import { QueryInfo } from '.'
 import { Collection } from './Collection';
 import { Model, NonAbstractModel } from './Model';
@@ -267,14 +267,59 @@ export class DB {
     return this
   }
 
-  public set(key: string, value: DBValue): this
+  /**
+   * Adds a set clause for when using an `insert`, `update` or `replace`
+   *
+   * @param {string} column The column of the table
+   * @param {DBValue} value The value for the column
+   * @returns {this}
+   * @memberof DB
+   */
+  public set(column: string, value: DBValue): this
+  /**
+   * Adds a set clause for when using an `insert`, `update` or `replace`
+   *
+   * @param {object} data The object containing column/value data to do the `insert` or `update`
+   * @returns {this}
+   * @memberof DB
+   */
   public set(data: object): this
   public set(...args: (string | DBValue | object)[]): this {
     if (args.length == 1 && typeof args[0] == 'object') {
       let data = args[0] as object
       Object.entries(data).forEach(i => this._queryInfo.addSet(new DBKeyVal(i[0], '=', i[1])))
-    } else {
+    } else if (args.length == 2) {
+      let [key, value] = args as [string, DBValue]
+      this._queryInfo.addDuplicateKeyUpdate(new DBKeyVal(key, '=', value))
+    }
+    return this
+  }
 
+
+  /**
+   * Adds a duplicate key/value when using `on duplicate key update`
+   *
+   * @param {string} column The column of the table
+   * @param {DBValue} value The value for the column
+   * @returns {this}
+   * @memberof DB
+   */
+  public duplicateKey(column: string, value: DBValue): this
+  /**
+   * Adds a duplicate key/value when using `on duplicate key update`
+   *
+   * @param {object} data The object to do the update with
+   * @returns {this}
+   * @memberof DB
+   */
+  public duplicateKey(data: object): this
+  public duplicateKey(...args: (string | DBValue | object)[]): this {
+    if (args.length == 1 && typeof args[0] == 'object') {
+      let data = args[0] as object
+      Object.entries(data).forEach(i => this._queryInfo.addDuplicateKeyUpdate(new DBKeyVal(i[0], '=', i[1])))
+    } else if (args.length == 2) {
+      let [key, value] = args as [string, DBValue]
+      this._queryInfo.addDuplicateKeyUpdate(new DBKeyVal(key, '=', value))
     }
     return this
   }
@@ -561,7 +606,7 @@ export class DB {
    */
   public async get(): Promise<RowDataPacket[] | any> {
     let query = this._queryInfo.selectQuery
-    return await this.query(query, ...this._queryInfo.placeholders)
+    return await this.query(query, ...this._queryInfo.selectPlaceholders)
   }
 
   /**
@@ -596,7 +641,7 @@ export class DB {
   public async update(values: object): Promise<boolean> {
     this.set(values)
     try {
-      await this.query(this._queryInfo.updateQuery, ...this._queryInfo.placeholders)
+      await this.query(this._queryInfo.updateQuery, ...this._queryInfo.updatePlaceholders)
       return true
     } catch (e) {
       log.error(e)
@@ -685,7 +730,7 @@ export class DB {
     let callback = (args.length == 2 ? args[1] : args[0]) as Function
     let rows = (args.length == 2 ? args[0] : 10) as number
     let query = this._queryInfo.selectQuery
-    log.console(query, '=>', this._queryInfo.placeholders)
+    log.console(query, '=>', this._queryInfo.selectPlaceholders)
     return new Promise<void>(async resolve => {
       let connection = await this._getConnection()
       let collection: Collection<any> = new Collection
@@ -697,7 +742,7 @@ export class DB {
         connection.resume()
       }
       // Execute the query
-      connection.query(query, this._queryInfo.placeholders)
+      connection.query(query, this._queryInfo.selectPlaceholders)
         // Build the result array and send it when the array is long enough
         .on('result', async (row: RowDataPacket) => {
           collection.add(row)
@@ -731,7 +776,7 @@ export class DB {
   public async cursor<T extends Model>(callback: (row: RowDataPacket | T) => void): Promise<void> {
     let connection = await this._getConnection()
     return new Promise(resolve => {
-      connection.query(this._queryInfo.selectQuery, this._queryInfo.placeholders)
+      connection.query(this._queryInfo.selectQuery, this._queryInfo.selectPlaceholders)
         .on('result', async (row: RowDataPacket) => {
           connection.pause()
           if (this instanceof Model)
@@ -866,9 +911,9 @@ export class DB {
     let results = await this.get()
 
     // Get the results without a limit and with a count(*)
-    this.limit(undefined).offset(undefined).setOrderBy().select(new DBRaw('count(*) as `red5_calc_found_rows`'))
+    this.limit(undefined).offset(undefined).setOrderBy().select(new DBRaw('count(*) as `horsepower_calc_found_rows`'))
     // console.log(await this.get())
-    let total = (await this.get())[0]['red5_calc_found_rows']
+    let total = (await this.get())[0]['horsepower_calc_found_rows']
 
     // Reset the values back to their original values
     this.limit(limit).offset(limitStart).setOrderBy(...order).setSelect(...select)

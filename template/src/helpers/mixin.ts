@@ -1,7 +1,7 @@
 import { Template } from './extend';
 import { step } from '.';
 import { TemplateData } from '..';
-import { Client } from '@red5/server';
+import { Client } from '@horsepower/server';
 
 export interface Mixin {
   name: string

@@ -2,7 +2,7 @@ import { Template, parseFile, step/* , getData */ } from './helpers'
 import extend from './helpers/extend'
 import { getMixins } from './helpers/mixin'
 import { minify, Options } from 'html-minifier'
-import { Client } from '@red5/server'
+import { Client } from '@horsepower/server'
 import * as vm from 'vm'
 import { Form, Data } from './classes'
 
@@ -16,7 +16,7 @@ export interface TemplateData {
 
 export type Nullable<T> = T | null | undefined
 
-export class Red5Template {
+export class horsepowerTemplate {
 
   private templateData: TemplateData
   private readonly client: Client
@@ -31,7 +31,7 @@ export class Red5Template {
    *
    * @param {Template} tpl The template to build
    * @returns {Promise<Template>} The rebuilt template
-   * @memberof Red5Template
+   * @memberof horsepowerTemplate
    */
   public async build(tpl: Template): Promise<Template> {
     let rootTpl = await extend(tpl)
@@ -54,7 +54,7 @@ export class Red5Template {
    * @param {object} [data={}] The template data
    * @param {Options} [minifyOptions] Options to minify the output using [html-minifier](https://www.npmjs.com/package/html-minifier#options-quick-reference)
    * @returns {Promise<string>}
-   * @memberof Red5Template
+   * @memberof horsepowerTemplate
    */
   public static async render(client: Client, data: object = {}, minifyOptions?: Options): Promise<string> {
     try {
@@ -63,7 +63,7 @@ export class Red5Template {
       if (!file) return ''
       let templateData: TemplateData = { originalData: {}, scopes: [] }
       templateData.originalData = Object.assign<object, object>(templateData.originalData, data)
-      let r5tpl = new Red5Template(client, templateData)
+      let r5tpl = new horsepowerTemplate(client, templateData)
       let html = (await r5tpl.build(await parseFile(file))).dom.serialize()
 
       let defaultMinifyOptions = {

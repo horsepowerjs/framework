@@ -4,13 +4,13 @@
     "declarationDir": "types",
     "baseUrl": ".",
     "paths": {
-      "@red5/mysql": [
+      "@horsepower/mysql": [
         "../../mysql"
       ],
-      "@red5/server": [
+      "@horsepower/server": [
         "../../server"
       ],
-      "@red5/router": [
+      "@horsepower/router": [
         "../../router"
       ]
     }

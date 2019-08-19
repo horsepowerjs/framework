@@ -10,7 +10,7 @@ ROOT=$SCRIPT_DIR/..
 
 printf "cd ${SCRIPT_DIR}\n"
 
-printf "${CYAN}Installing @red5 packages${NC}\n"
+printf "${CYAN}Installing @horsepower packages${NC}\n"
 
 printf "${CYAN}MySQL${NC}\n"
 cd $ROOT/mysql && npm install

@@ -4,13 +4,13 @@
     "declarationDir": "types",
     "baseUrl": ".",
     "paths": {
-      "@red5/server": [
+      "@horsepower/server": [
         "../server"
       ],
-      "@red5/session": [
+      "@horsepower/session": [
         "../plugins/session"
       ],
-      "@red5/storage": [
+      "@horsepower/storage": [
         "../storage"
       ]
     }

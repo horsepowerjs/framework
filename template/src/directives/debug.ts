@@ -1,6 +1,6 @@
 import { replaceVariables } from '../helpers'
 import { TemplateData } from '..'
-import { isProduction } from '@red5/server'
+import { isProduction } from '@horsepower/server'
 
 // <debug log="{{$test}}"></debug>
 // <debug info="test"></debug>
