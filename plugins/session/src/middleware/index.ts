@@ -1,4 +1,4 @@
-import { Client, getConfig, Middleware } from '@red5/server'
+import { Client, getConfig, Middleware } from '@horsepower/server'
 import { SessionSettings } from '..'
 import { CookieSerializeOptions } from 'cookie'
 

@@ -1,7 +1,6 @@
 import { OutgoingHttpHeaders } from 'http'
-import { Router, Route } from '@horsepower/router'
-import { parse } from 'url'
-import { Client } from './Client';
+import { Router } from '@horsepower/router'
+import { Client } from './Client'
 
 export interface CookieOptions {
   path?: string

@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import * as helpers from './helper'
-import { Client } from '@horsepower/server'
+import { Client } from '.'
 import { horsepowerTemplate } from '@horsepower/template'
 import { Storage } from '@horsepower/storage'
 

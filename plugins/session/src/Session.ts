@@ -1,6 +1,6 @@
 import { CookieSerializeOptions, parse } from 'cookie'
-import { Client, getConfig, AppSettings } from '@red5/server'
-import { Storage, StorageSettings } from '@red5/storage'
+import { Client, getConfig, AppSettings } from '@horsepower/server'
+import { Storage, StorageSettings } from '@horsepower/storage'
 import * as crypto from 'crypto'
 import * as path from 'path'
 
@@ -34,7 +34,7 @@ export class Session {
   private _record: SessionRecord = this._originalRecord
   private store: Storage<object>
 
-  private get file() { return path.join('red5', 'sessions', this._record.id + '.sess') }
+  private get file() { return path.join('horsepower', 'sessions', this._record.id + '.sess') }
   public get csrf() { return this._record.csrf || '' }
   public get id() { return this._record.id || '' }
   public get created() { return this._record.creation }

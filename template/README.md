@@ -1,8 +1,8 @@
-@red5/template is a template tool originally built for the red5 http server, and uses custom html tags for different features such as `loops`, `if/elif/else`, etc.
+@horsepower/template is a template tool originally built for the horsepower http server, and uses custom html tags for different features such as `loops`, `if/elif/else`, etc.
 
-## Red5 Http Server Usage
+## Horse Power Http Server Usage
 
-This is the basic usage. All examples use the red5 http server.
+This is the basic usage. All examples use the horsepower http server.
 
 ### Basic Usage
 

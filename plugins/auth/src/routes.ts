@@ -1,4 +1,4 @@
-import { Router } from '@red5/router'
+import { Router } from '@horsepower/router'
 
 type Location = {
   to?: string

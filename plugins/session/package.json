@@ -1,6 +1,6 @@
 {
     "name": "@horsepower/session",
-    "version": "1.0.5",
+    "version": "1.0.0",
     "description": "Session management for the horsepower http server.",
     "main": "lib/index.js",
     "scripts": {
@@ -11,8 +11,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@horsepower/server": "^1.0.8",
-        "@horsepower/storage": "^1.0.4",
+        "@horsepower/server": "^1.0.0",
+        "@horsepower/storage": "^1.0.0",
         "cookie": "^0.3.1",
         "crypto": "^1.0.1"
     },

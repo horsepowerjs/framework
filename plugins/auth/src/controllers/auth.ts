@@ -1,4 +1,4 @@
-import { Client, getConfig } from '@red5/server'
+import { Client, getConfig } from '@horsepower/server'
 import { AuthSettings } from '../routes'
 import { Login } from '../helpers/Login'
 

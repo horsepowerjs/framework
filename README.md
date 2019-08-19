@@ -1,6 +1,6 @@
 # Contributing
 
-To contribute code to the red5 framework take the following steps:
+To contribute code to the horsepower framework take the following steps:
 
 1. Clone the repository
 2. Install the dependencies
@@ -16,15 +16,15 @@ The following steps will get you on the right path to make changes and contribut
 
 ### Clone the repository
 
-Clone the repository to a folder of your choosing. If you plan on contributing to multiple red5 repositories, it is recommended to place them in a `red5` or such directory.
+Clone the repository to a folder of your choosing. If you plan on contributing to multiple horsepower repositories, it is recommended to place them in a `horsepower` or such directory.
 
 ```bash
 # Optional commands
-mkdir red5
-cd red5
+mkdir horsepower
+cd horsepower
 
 # Required commands
-git clone git@github.com:red5-server/framework.git
+git clone git@github.com:horsepower-server/framework.git
 ```
 
 ### Install the dependencies
@@ -48,7 +48,7 @@ Not all dependencies rely on one another, but during development we will just li
 
 The packages can be built one of two ways:
 
-* A single build 
+* A single build
 * A watching build
 
 A single build will build all of the packages once and then exit, whereas a watching build will build all of the packages and watch for changes then rebuild individual packages only when they have changed.
@@ -63,30 +63,30 @@ gulp build:watch
 
 ### Testing
 
-The simplest way to test is to install the `@red5/cli` tool, this will download and install the red5 packages from [Github](https://github.com/red5-server/red5)
+The simplest way to test is to install the `@horsepower/cli` tool, this will download and install the horsepower packages from [Github](https://github.com/horsepower-server/horsepower)
 
 ```bash
 # Install the cli
-npm i -g @red5/cli
+npm i -g @horsepower/cli
 
 # CD into the parent directory of a test project
 cd ~/Documents/www
 
-# Run the new command from red5
+# Run the new command from horsepower
 # where "<website-name>" is the name of the new directory
-red5 new <website-name>
+horsepower new <website-name>
 cd <website-name>
 
 # Create links to the framework
 # We don't want to use the production versions here
 # These should have already been created when `./link.sh` was executed
-npm link @red5/router
-npm link @red5/session
-npm link @red5/storage
-npm link @red5/middleware
-npm link @red5/server
-npm link @red5/template
-npm link @red5/mysql
+npm link @horsepower/router
+npm link @horsepower/session
+npm link @horsepower/storage
+npm link @horsepower/middleware
+npm link @horsepower/server
+npm link @horsepower/template
+npm link @horsepower/mysql
 ```
 
 You may want to edit the `.env` file and if so do that now because it needs to be done before the server is started. Any changes to that file will require the server to be manually restarted.
@@ -97,7 +97,7 @@ Once ready, you can run the server however you would like.
 
 PM2 is a process manager that allows you to manage one or more processes. This will help us by allowing us to automatically restart the server in the background when the project files change. This way we don't need to manually do it ourselves every time we save/create/delete etc.
 
-The red5 install comes with a [PM2](https://www.npmjs.com/package/pm2) configuration file that is setup to watch directories. 
+The horsepower install comes with a [PM2](https://www.npmjs.com/package/pm2) configuration file that is setup to watch directories.
 
 
 We may want to add an additional watch path in the PM2 configuration file for development purposes to also watch for changes to the framework within the `node_modules` directory:
@@ -108,7 +108,7 @@ module.exports = {
     {
       watch: [
         // Previously listed paths
-        path.join(__dirname, 'node_modules/@red5/*/lib/**/*.js')
+        path.join(__dirname, 'node_modules/@horsepower/*/lib/**/*.js')
       ]
     }
   ]

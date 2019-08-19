@@ -1,6 +1,6 @@
 import { WebSocket, SSLApp, App, HttpRequest } from 'uWebSockets.js'
 import { SocketClient } from './SocketClient'
-import { getConfig } from '@red5/server'
+import { getConfig } from '@horsepower/server'
 import { SocketSettings } from '.'
 import { SocketRoom } from './SocketRoom'
 

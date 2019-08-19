@@ -1,4 +1,4 @@
-import { Client } from '@horsepower/server'
+import { Client } from '.'
 
 export abstract class Plugin {
   public abstract boot(): void

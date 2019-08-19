@@ -5,9 +5,9 @@ import { parse as parseCookie } from 'cookie'
 import { IncomingMessage, IncomingHttpHeaders } from 'http'
 
 import { RequestMethod, Route } from '@horsepower/router'
-import { Response, getConfig, AppSettings } from '@horsepower/server'
+import { Response, getConfig, AppSettings } from '.'
 import { Storage, FileStorage } from '@horsepower/storage'
-import { collect } from './util';
+import { collect } from './util'
 
 export interface FileType {
   /**

@@ -1,5 +1,5 @@
-import { Client, getConfig } from '@red5/server'
-import { DB, Model } from '@red5/mysql'
+import { Client, getConfig } from '@horsepower/server'
+import { DB, Model } from '@horsepower/mysql'
 import * as bcrypt from 'bcrypt'
 import { AuthSettings } from '../routes'
 

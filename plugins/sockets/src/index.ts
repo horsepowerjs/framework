@@ -1,5 +1,5 @@
 import { AppOptions } from 'uWebSockets.js'
-import { Plugin, Client } from '@red5/server'
+import { Plugin, Client } from '@horsepower/server'
 import { SocketApp } from './SocketApp'
 import { SocketClient } from './SocketClient'
 

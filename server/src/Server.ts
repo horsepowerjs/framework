@@ -1,5 +1,5 @@
 import { StorageSettings, Storage } from '@horsepower/storage'
-import { Client, Response, log, MiddlewareManager } from '@horsepower/server'
+import { Client, Response, log, MiddlewareManager } from '.'
 import { Router } from '@horsepower/router'
 
 import * as http from 'http'

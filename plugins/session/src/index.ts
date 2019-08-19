@@ -1,5 +1,5 @@
 import { CookieSerializeOptions } from 'cookie'
-import { Plugin } from '@red5/server'
+import { Plugin } from '@horsepower/server'
 import * as path from 'path'
 
 export * from './Session'

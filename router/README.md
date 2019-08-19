@@ -1,6 +1,6 @@
 # Installation
 
-    npm i -s red5-router
+    npm i -s horsepower-router
 
 # Usage
 
@@ -9,7 +9,7 @@
 To start creating routes, the `Router` class needs to be included. This can be done like this:
 
 ```js
-const { Router } = require('red5-router');
+const { Router } = require('horsepower-router');
 ```
 
 By default the controllers root will attempt to find the controllers folder as a sibling of `require.main.filename`. So, for example if the file is `node /root/app/index.js` the router will attempt to load controllers from `/root/app/controllers`. To change this location, call `Router.setControllersRoot()` like this:
@@ -65,8 +65,8 @@ module.exports.profile = function(client) {
 
 Example urls will look something like this:
 
-* `http://example.com/profile/red5`
-* `http://example.com/profile/red5-router`
+* `http://example.com/profile/horsepower`
+* `http://example.com/profile/horsepower-router`
 * `http://example.com/profile/billy-bob`
 
 ## Route RegExp

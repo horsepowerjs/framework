@@ -1,6 +1,6 @@
 {
     "name": "@horsepower/router",
-    "version": "1.0.7",
+    "version": "1.0.1",
     "description": "Router for the horsepower http server.",
     "main": "lib/index.js",
     "scripts": {
@@ -11,7 +11,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@horsepower/server": "^1.0.8"
+        "@horsepower/server": "^1.0.0"
     },
     "files": [
         "lib",
