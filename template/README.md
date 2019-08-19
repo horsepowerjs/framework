@@ -1,6 +1,6 @@
 @horsepower/template is a template tool originally built for the horsepower http server, and uses custom html tags for different features such as `loops`, `if/elif/else`, etc.
 
-## Horse Power Http Server Usage
+## Horsepower Http Server Usage
 
 This is the basic usage. All examples use the horsepower http server.
 

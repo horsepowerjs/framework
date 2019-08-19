@@ -1,8 +1,8 @@
-# Horse Power Server
+# Horsepower Server
 
 ## Installation
 
-To install the server use the [Horse Power CLI Tool](https://www.npmjs.com/package/@horsepower/cli). It can be installed and executed as follows:
+To install the server use the [Horsepower CLI Tool](https://www.npmjs.com/package/@horsepower/cli). It can be installed and executed as follows:
 
 ```sh
 # Install the command line tool
