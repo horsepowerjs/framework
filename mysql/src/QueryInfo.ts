@@ -120,7 +120,9 @@ export class QueryInfo {
     }, [])
 
     // Create the initial select string
-    let str = [`select ${this._distinct ? 'distinct' : ''} ${columns} from ??`]
+    let str = ['select']
+    this._distinct && str.push('distinct')
+    str.push(columns, 'from ??')
     this._selectPlaceholders.push(this._table as string)
 
     // If there are where items, build the where item list

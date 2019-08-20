@@ -1,5 +1,5 @@
 import * as mysql from 'mysql'
-import { configPath, getConfig, log } from '@horsepower/server'
+import { configPath, getConfig, log, Collection as BaseCollection, collect } from '@horsepower/server'
 import { QueryInfo } from '.'
 import { Collection } from './Collection';
 import { Model, NonAbstractModel } from './Model';
@@ -610,7 +610,9 @@ export class DB {
   }
 
   /**
-   * Gets the first row in the result set
+   * Gets the first row in the result set.
+   *
+   * **Note:** This will add/replace the limit in the query as `1`.
    *
    * @returns {Promise<RowDataPacket>}
    * @memberof DB
@@ -624,18 +626,60 @@ export class DB {
   }
 
   /**
-   * Get the first row in the result set and returns a specific cell value
+   * Get the first row in the result set and returns a specific column value.
    *
-   * @param {string} column
+   * **Notes**
+   * * This will replace the previously set columns in the result.
+   * * This will add/replace the limit in the query as `1`.
+   *
+   * @param {string} column The name of the column to match.
    * @returns {(Promise<DBCell | null>)}
    * @memberof DB
    */
-  public async cell(column: string): Promise<DBCell | null> {
+  public async value(column: string): Promise<DBCell | null> {
+    this.setSelect(column)
     let result = await this.first()
     if (result) {
       return result[column]
     }
     return null
+  }
+
+  /**
+   * Retrieves a list of column values.
+   *
+   * **Note:** This will replace the previously set columns in the result.
+   *
+   * @param {string} value The column for the value
+   * @returns
+   * @memberof DB
+   */
+  public async pluck(value: string): Promise<BaseCollection<DBCell>>
+  /**
+   * Retrieves a list of column values.
+   *
+   * **Note:** This will replace the previously set columns in the result.
+   *
+   * @param {string} value The column for the value
+   * @param {string} key An optional column for the key
+   * @returns
+   * @memberof DB
+   */
+  public async pluck(value: string, key: string): Promise<object>
+  public async pluck(value: string, key?: string): Promise<BaseCollection<DBCell> | object> {
+    return await new Promise(async resolve => {
+      let result = key ? {} : []
+      this.setSelect(...[value, key].filter(i => i) as [string, string])
+      // await this.get()
+      await this.cursor(row => {
+        if (typeof key != 'undefined') {
+          result[row[key]] = row[value]
+        } else if (Array.isArray(result)) {
+          result.push(row[value])
+        }
+      })
+      resolve(Array.isArray(result) ? collect(result) : result)
+    })
   }
 
   public async update(values: object): Promise<boolean> {
@@ -802,20 +846,24 @@ export class DB {
   }
 
   /**
-   * Gets a count of results that would be found
+   * Gets a count of results that would be found.
+   *
+   * **Note:** This will replace the previously set columns in the result.
    *
    * @returns {Promise<number>}
    * @memberof DB
    */
   public async count(): Promise<number> {
     let select = this._queryInfo.select
-    let count = (await this.setSelect(new DBRaw('count(*) as c')).get())[0]['c']
+    let count = await this.setSelect(new DBRaw('count(*) as c')).first() as RowDataPacket
     this.setSelect(...select)
-    return <Promise<number>>count
+    return count['c'] as number
   }
 
   /**
-   * Gets the max value in a column
+   * Gets the max value in a column.
+   *
+   * **Note:** This will replace the previously set columns in the result.
    *
    * @param {string} column
    * @returns {Promise<number>}
@@ -823,13 +871,15 @@ export class DB {
    */
   public async max(column: string): Promise<number> {
     let select = this._queryInfo.select
-    let max = (await this.setSelect(new DBRaw('max(??) as m', [column])).get())[0]['m']
+    let max = await this.setSelect(new DBRaw('max(??) as m', [column])).first() as RowDataPacket
     this.setSelect(...select)
-    return <Promise<number>>max
+    return max['m']
   }
 
   /**
-   * Gets the min value in a column
+   * Gets the min value in a column.
+   *
+   * **Note:** This will replace the previously set columns in the result.
    *
    * @param {string} column
    * @returns {Promise<number>}
@@ -837,13 +887,15 @@ export class DB {
    */
   public async min(column: string): Promise<number> {
     let select = this._queryInfo.select
-    let min = (await this.setSelect(new DBRaw('min(??) as m', [column])).get())[0]['m']
+    let min = await this.setSelect(new DBRaw('min(??) as m', [column])).first() as RowDataPacket
     this.setSelect(...select)
-    return <Promise<number>>min
+    return min['m']
   }
 
   /**
-   * Gets the avg value in a column
+   * Gets the avg value in a column.
+   *
+   * **Note:** This will replace the previously set columns in the result.
    *
    * @param {string} column
    * @returns {Promise<number>}
@@ -851,13 +903,15 @@ export class DB {
    */
   public async avg(column: string): Promise<number> {
     let select = this._queryInfo.select
-    let avg = (await this.setSelect(new DBRaw('avg(??) as m', [column])).get())[0]['m']
+    let avg = await this.setSelect(new DBRaw('avg(??) as a', [column])).first() as RowDataPacket
     this.setSelect(...select)
-    return <Promise<any>>avg
+    return avg['a']
   }
 
   /**
-   * Gets the sum of a column
+   * Gets the sum of a column.
+   *
+   * **Note:** This will replace the previously set columns in the result.
    *
    * @param {string} column
    * @returns {Promise<number>}
@@ -865,26 +919,30 @@ export class DB {
    */
   public async sum(column: string): Promise<number> {
     let select = this._queryInfo.select
-    let sum = (await this.setSelect(new DBRaw('sum(??) as s', [column])).get())[0]['s']
+    let sum = await this.setSelect(new DBRaw('sum(??) as s', [column])).first() as RowDataPacket
     this.setSelect(...select)
-    return <Promise<any>>sum
+    return sum['s']
   }
 
   /**
-   * Checks if a row exists
+   * Checks if a row exists.
+   *
+   * **Note:** This will replace the previously set columns in the result.
    *
    * @returns {Promise<boolean>}
    * @memberof DB
    */
   public async exists(): Promise<boolean> {
     let select = this._queryInfo.select
-    let len = (await this.setSelect(new DBRaw('1')).get()).length
+    let row = await this.setSelect(new DBRaw('1')).first()
     this.setSelect(...select)
-    return len > 0
+    return !!row
   }
 
   /**
-   * Checks if a row does not exist
+   * Checks if a row does not exist.
+   *
+   * **Note:** This will replace the previously set columns in the result.
    *
    * @returns {Promise<boolean>}
    * @memberof DB
@@ -911,9 +969,9 @@ export class DB {
     let results = await this.get()
 
     // Get the results without a limit and with a count(*)
-    this.limit(undefined).offset(undefined).setOrderBy().select(new DBRaw('count(*) as `horsepower_calc_found_rows`'))
+    this.limit(undefined).offset(undefined).setOrderBy().select(new DBRaw('count(*) as `hp_calc_found_rows`'))
     // console.log(await this.get())
-    let total = (await this.get())[0]['horsepower_calc_found_rows']
+    let total = (await this.first() as RowDataPacket)['hp_calc_found_rows']
 
     // Reset the values back to their original values
     this.limit(limit).offset(limitStart).setOrderBy(...order).setSelect(...select)
@@ -926,7 +984,7 @@ export class DB {
    * Gets query information based on the current page and the results per page
    *
    * @param {number} page The current page
-   * @param {number} resultsPerPage The number of results per page
+   * @param {number} resultsPerPage The number of results per page (This value should not change from page-to-page for best results)
    * @param {boolean} enablePageRecalculation Re-runs the query if the page number is larger than the total page count returning the last page
    * @returns {Promise<DBPaginate>}
    * @memberof DB
