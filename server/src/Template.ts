@@ -30,6 +30,7 @@ export class Template {
     if (typeof client.response.templatePath == 'string') {
       let filePath = client.response.templatePath
       let options = Object.assign({}, client.response.templateData, helpers, {
+        path: client.path,
         get: client.data.getAll,
         post: client.data.postAll,
         request: client.data.requestAll,

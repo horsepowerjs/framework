@@ -1,13 +1,14 @@
 import * as path from 'path'
 import * as fs from 'fs'
-import { Template } from '../helpers/extend';
-import { fragmentFromFile, step, replaceVariables } from '../helpers';
-import { Mixin } from '../helpers/mixin';
-import { TemplateData } from '..';
-import { Client } from '@horsepower/server';
+import { Template } from '../helpers/extend'
+import { fragmentFromFile, step, replaceVariables, makeFragment } from '../helpers'
+import { Mixin } from '../helpers/mixin'
+import { TemplateData } from '..'
+import { Client } from '@horsepower/server'
+import { Storage } from '@horsepower/storage'
 
-// <include file="../abc/123"/></include>
-// <require file="../abc/123"/></require>
+// <include file="../abc/123"></include>
+// <require file="../abc/123"></require>
 // TODO: Add support for self closing tags
 
 /**
@@ -23,18 +24,27 @@ export async function includeBlock(client: Client, root: Template, element: Elem
   let inclFileName = element.getAttribute('file')
   if (inclFileName && element.ownerDocument && inclFileName.length > 0) {
     inclFileName = replaceVariables(inclFileName, data)
-    let dir = path.dirname(root.file)
-    let file = path.resolve(dir, inclFileName + (!inclFileName.endsWith('.mix') ? '.mix' : ''))
-    let isFile = await new Promise(r => fs.stat(file, (err, stats) => {
-      if (err) return r(false)
-      return r(stats.isFile())
-    }))
-    if (isFile) {
-      let frag = await fragmentFromFile(file)
+    inclFileName = path.join('views', !inclFileName.endsWith('.mix') ? inclFileName + '.mix' : inclFileName)
+    let resources = Storage.mount('resources')
+    if (await resources.exists(inclFileName)) {
+      let content = (await resources.read(inclFileName)).toString()
+      let frag = makeFragment(content)
       step(client, root, frag, data, mixins)
       frag && element.replaceWith(frag)
     } else {
-      element.remove()
+      let fallback = element.getAttribute('else')
+      if (fallback) {
+        fallback = replaceVariables(fallback, data)
+        fallback = path.join('views', !fallback.endsWith('.mix') ? fallback + '.mix' : fallback)
+        if (await resources.exists(fallback)) {
+          let content = (await resources.read(fallback)).toString()
+          let frag = makeFragment(content)
+          step(client, root, frag, data, mixins)
+          frag && element.replaceWith(frag)
+        } else {
+          element.remove()
+        }
+      }
     }
   }
 }
@@ -52,18 +62,16 @@ export async function requireBlock(client: Client, root: Template, element: Elem
   let inclFileName = element.getAttribute('file')
   if (inclFileName && element.ownerDocument && inclFileName.length > 0) {
     inclFileName = replaceVariables(inclFileName, data)
-    let dir = path.dirname(root.file)
-    let file = path.resolve(dir, inclFileName + (!inclFileName.endsWith('.mix') ? '.mix' : ''))
-    let isFile = await new Promise(r => fs.stat(file, (err, stats) => {
-      if (err) return r(false)
-      return r(stats.isFile())
-    }))
-    if (isFile) {
-      let frag = await fragmentFromFile(file)
+    inclFileName = path.join('views', !inclFileName.endsWith('.mix') ? inclFileName + '.mix' : inclFileName)
+    let resources = Storage.mount('resources')
+    if (await resources.exists(inclFileName)) {
+      let content = (await resources.read(inclFileName)).toString()
+      let frag = makeFragment(content)
       step(client, root, frag, data, mixins)
       frag && element.replaceWith(frag)
     } else {
-      throw new Error(`Could not find template "${file}"`)
+      element.remove()
+      throw new Error(`Could not find template "${inclFileName}"`)
     }
   }
 }

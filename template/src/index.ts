@@ -63,8 +63,8 @@ export class horsepowerTemplate {
       if (!file) return ''
       let templateData: TemplateData = { originalData: {}, scopes: [] }
       templateData.originalData = Object.assign<object, object>(templateData.originalData, data)
-      let r5tpl = new horsepowerTemplate(client, templateData)
-      let html = (await r5tpl.build(await parseFile(file))).dom.serialize()
+      let hpTpl = new horsepowerTemplate(client, templateData)
+      let html = (await hpTpl.build(await parseFile(file))).dom.serialize()
 
       let defaultMinifyOptions = {
         collapseWhitespace: true,
