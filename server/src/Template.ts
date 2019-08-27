@@ -4,6 +4,8 @@ import * as helpers from './helper'
 import { Client } from '.'
 import { horsepowerTemplate } from '@horsepower/template'
 import { Storage } from '@horsepower/storage'
+import { getConfig } from './helper';
+import { Options } from 'html-minifier'
 
 export interface pug {
   renderFile(path: string, options?: {}, callback?: Function): string
@@ -13,6 +15,11 @@ export interface mustache {
 }
 export interface handlebars {
   compile(path: string, options?: {}, callback?: Function): string
+}
+
+export interface ViewConfig {
+  path?: string
+  minifier?: Options
 }
 
 export class Template {
@@ -39,8 +46,10 @@ export class Template {
       })
       let file = path.join(this._root, filePath)
       // Render horsepower files
+      let viewConfig = getConfig<ViewConfig>('view')
       if (filePath.endsWith('.mix')) {
-        html = await horsepowerTemplate.render(client, options)
+        let minify = viewConfig && viewConfig.minifier || undefined
+        html = await horsepowerTemplate.render(client, options, minify)
       }
       // Render pug files
       else if (filePath.endsWith('.pug')) {

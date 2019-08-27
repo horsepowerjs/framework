@@ -2,7 +2,7 @@ import * as path from 'path'
 import { JSDOM } from 'jsdom'
 import { parseFile } from './files';
 
-// <extends file="../abc/def">
+// <extends file="../abc/def"></extends>
 
 export interface Template {
   dom: JSDOM
@@ -18,7 +18,7 @@ export default async function extend(tpl: Template) {
   if (!item) return tpl
   let inclFileName = item.getAttribute('file')
   if (inclFileName && item.parentElement) {
-    let dir = path.dirname(tpl.file)
+    // let dir = path.dirname(tpl.file)
     // let file = path.resolve(dir, inclFileName + (!inclFileName.endsWith('.mix') ? '.mix' : ''))
     let file = inclFileName + (!inclFileName.endsWith('.mix') ? '.mix' : '')
     let parent = await parseFile(file)
