@@ -1,4 +1,4 @@
-import { StorageSettings, Storage } from '@horsepower/storage'
+import { StorageSettings, Storage, FileStorage } from '@horsepower/storage'
 import { Client, Response, log, MiddlewareManager } from '.'
 import { Router } from '@horsepower/router'
 
@@ -8,6 +8,7 @@ import * as fs from 'fs'
 import * as mime from 'mime-types'
 import * as path from 'path'
 import * as url from 'url'
+import * as crypto from 'crypto'
 
 import { serialize, CookieSerializeOptions } from 'cookie'
 
@@ -422,11 +423,15 @@ export class Server {
         .on('error', err => res.end(err))
     } else {
       if (client.response.templatePath) {
-        try {
-          responseBody = await Template.render(client)
-        } catch (e) {
-          await this.getErrorPage(client, 500, { message: e.stack })
-          responseBody = client.response.body
+        if (client.response.loadFromCache) {
+          responseBody = await this._readCacheTemplate(client)
+        } else {
+          try {
+            responseBody = await Template.render(client)
+          } catch (e) {
+            await this.getErrorPage(client, 500, { message: e.stack })
+            responseBody = client.response.body
+          }
         }
       } else if (client.response.buffer) {
         responseBody = client.response.buffer
@@ -445,5 +450,38 @@ export class Server {
     await MiddlewareManager.run(client.route, client, 'terminate')
 
     // client.session && await client.session.close()
+  }
+
+  private static async _readCacheTemplate(client: Client) {
+    let responseBody = ''
+    if (!client.response.templatePath) return ''
+    let ttl = client.response.cacheTTL
+    let md5 = crypto.createHash('md5').update(client.response.templatePath).digest('hex')
+    let tmp = Storage.mount<FileStorage>('tmp')
+    let tmpPath = path.join('horsepower/cache', md5 + '.html')
+    let info = await tmp.info(tmpPath)
+    if (info) {
+      let diff = Math.abs((info.ctime.getTime() - new Date().getTime()) / 1000)
+      if (diff < ttl) {
+        responseBody = (await tmp.read(tmpPath)).toString()
+      } else {
+        responseBody = await this._createTempFile(client, tmpPath, tmp)
+      }
+    } else {
+      responseBody = await this._createTempFile(client, tmpPath, tmp)
+    }
+    return responseBody
+  }
+
+  private static async _createTempFile(client: Client, tmpPath: string, tmp: Storage<FileStorage>) {
+    let responseBody = ''
+    try {
+      responseBody = await Template.render(client)
+      await tmp.write(tmpPath, responseBody)
+    } catch (e) {
+      await this.getErrorPage(client, 500, { message: e.stack })
+      responseBody = client.response.body
+    }
+    return responseBody
   }
 }

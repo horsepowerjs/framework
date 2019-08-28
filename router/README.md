@@ -1,6 +1,6 @@
 # Installation
 
-    npm i -s horsepower-router
+    npm i -s @horsepower/router
 
 # Usage
 
@@ -9,7 +9,7 @@
 To start creating routes, the `Router` class needs to be included. This can be done like this:
 
 ```js
-const { Router } = require('horsepower-router');
+const { Router } = require('@horsepower/router');
 ```
 
 By default the controllers root will attempt to find the controllers folder as a sibling of `require.main.filename`. So, for example if the file is `node /root/app/index.js` the router will attempt to load controllers from `/root/app/controllers`. To change this location, call `Router.setControllersRoot()` like this:

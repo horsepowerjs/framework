@@ -1,6 +1,7 @@
 import { OutgoingHttpHeaders } from 'http'
 import { Router } from '@horsepower/router'
 import { Client } from './Client'
+import { Storage } from '@horsepower/storage';
 
 export interface CookieOptions {
   path?: string
@@ -21,8 +22,9 @@ export class Response {
 
   private _filePath: string | null = null
   private _templatePath: string | null = null
+  private _loadFromCache: boolean = false
+  private _cacheTTL: number = -1
   private _templateData: {} | null = null
-  // private _media: MediaFile | null = null
   private _buffer: Buffer | null = null
   private _cookies: (Cookie & CookieOptions)[] = []
 
@@ -37,6 +39,8 @@ export class Response {
   public get contentLength(): number { return this._length }
   public get filePath(): string | null { return this._filePath }
   public get templatePath(): string | null { return this._templatePath }
+  public get loadFromCache(): boolean { return this._loadFromCache }
+  public get cacheTTL(): number { return this._cacheTTL }
   public get templateData(): {} | null { return this._templateData }
   public get buffer(): Buffer | null { return this._buffer }
 
@@ -188,9 +192,27 @@ export class Response {
    * @returns
    * @memberof Response
    */
-  public render(path: string, data: {} = {}, code: number = 200) {
+  public render(path: string, data: object = {}, code: number = 200) {
     this._templatePath = path
     this._templateData = data
+    return this.setCode(code)
+  }
+
+  /**
+   * Loads a template from the cache.
+   *
+   * @param {string} path The location to the template
+   * @param {number} ttl The time for the template to live for in seconds
+   * @param {{}} [data={}] Additional data for the template such as functions/variables
+   * @param {number} [code=200] The status code to send with the template
+   * @returns
+   * @memberof Response
+   */
+  public cached(path: string, ttl: number, data: object = {}, code: number = 200) {
+    this._templatePath = path
+    this._templateData = data
+    this._loadFromCache = true
+    this._cacheTTL = ttl
     return this.setCode(code)
   }
 

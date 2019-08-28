@@ -24,7 +24,7 @@ mkdir horsepower
 cd horsepower
 
 # Required commands
-git clone git@github.com:horsepower-server/framework.git
+git clone git@github.com:horsepowerjs/horsepower.git
 ```
 
 ### Install the dependencies
@@ -63,7 +63,7 @@ gulp build:watch
 
 ### Testing
 
-The simplest way to test is to install the `@horsepower/cli` tool, this will download and install the horsepower packages from [Github](https://github.com/horsepower-server/horsepower)
+The simplest way to test is to install the `@horsepower/cli` tool, this will download and install the horsepower packages from [Github](https://github.com/horsepowerjs/horsepower)
 
 ```bash
 # Install the cli

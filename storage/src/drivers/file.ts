@@ -101,6 +101,14 @@ export interface FileStorage extends Storage<any> {
    */
   isDirectory(filePath: string): Promise<boolean>
   /**
+   * Gets information about a file
+   *
+   * @param {string} filePath The path to the file
+   * @returns {(Promise<fs.Stats | null>)}
+   * @memberof FileStorage
+   */
+  info(filePath: string): Promise<fs.Stats | null>
+  /**
    * Gets the full path to a file or directory
    *
    * @abstract
@@ -285,6 +293,15 @@ export default class extends Storage<{}> {
       fs.stat(this.forceRoot(objectPath), (err, stat) => {
         if (err) return resolve(false)
         return resolve(stat.isDirectory())
+      })
+    })
+  }
+
+  public info(objectPath: string): Promise<fs.Stats | null> {
+    return new Promise<fs.Stats | null>(resolve => {
+      fs.stat(this.forceRoot(objectPath), (err, stat) => {
+        if (err) return resolve(null)
+        return resolve(stat)
       })
     })
   }

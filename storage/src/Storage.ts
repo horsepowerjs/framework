@@ -332,4 +332,13 @@ export abstract class Storage<OptionsType extends object>  {
    * @memberof Storage
    */
   public abstract toPath(filePath: string): string
+  /**
+   * Gets information about the file
+   *
+   * @abstract
+   * @param {string} filePath The path to the file or directory
+   * @returns {Promise<object>}
+   * @memberof Storage
+   */
+  public abstract info(filePath: string): Promise<object | null>
 }
