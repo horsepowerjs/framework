@@ -269,7 +269,7 @@ export class Server {
       }
 
       const routeInfo = await Router.route(urlInfo, client.method)
-      let resp: Response | null = null
+      let resp: string | object | any[] | Response | undefined | null = null
       if (routeInfo && routeInfo.route && routeInfo.callback) {
         client.setRoute(routeInfo.route)
         // Run the pre request middleware `MyMiddleware.handle()`
@@ -280,7 +280,12 @@ export class Server {
         if (!await this._runMiddleware(routeInfo, client, req, res, 'post')) return
       }
 
-      !resp && await this.getErrorPage(client, 400, { message: new Error().stack })
+      if (!resp) await this.getErrorPage(client, 400, { message: new Error().stack })
+      else if (!(resp instanceof Response)) {
+        if (typeof resp == 'string') client.response.html(resp)
+        else client.response.json(resp)
+      }
+
       await this.send(client, req, res)
     } catch (e) {
       await this.getErrorPage(client, 500, { message: e.stack })
@@ -456,7 +461,7 @@ export class Server {
     let responseBody = ''
     if (!client.response.templatePath) return ''
     let ttl = client.response.cacheTTL
-    let md5 = crypto.createHash('md5').update(client.response.templatePath).digest('hex')
+    let md5 = crypto.createHash('md5').update(client.route.path).digest('hex')
     let tmp = Storage.mount<FileStorage>('tmp')
     let tmpPath = path.join('horsepower/cache', md5 + '.html')
     let info = await tmp.info(tmpPath)

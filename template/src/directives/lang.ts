@@ -5,8 +5,8 @@ import { replaceVariables } from '../helpers'
 
 export default async function (client: Client, root: Template, element: Element, templateData: TemplateData) {
   if (element.ownerDocument) {
-    let text = await client.trans(replaceVariables(element.getAttribute('key') || '', templateData))
-    return element.replaceWith(await createElement(element, templateData) as Element)
+    // let text = await client.trans(replaceVariables(element.getAttribute('key') || '', templateData))
+    return element.replaceWith(await createElement(client, element, templateData) as Element)
     // let store = Storage.mount('resources')
     // let [file] = (element.getAttribute('key') || '').split('.')
     // if (await store.exists(path.join('lang', client.getLocale(), `${file}.json`))) {
@@ -14,16 +14,19 @@ export default async function (client: Client, root: Template, element: Element,
     //   return element.replaceWith(await createElement(client, element, templateData, langData) as Element)
     // }
   }
-  element.replaceWith(await createElement(element, templateData) as Element)
+  element.replaceWith(await createElement(client, element, templateData) as Element)
 }
 
-async function createElement(element: Element, templateData: TemplateData, data?: Lang) {
+async function createElement(client: Client, element: Element, templateData: TemplateData, data?: Lang) {
   if (!element.ownerDocument) return
-  let [, ...keyPath] = replaceVariables((element.getAttribute('key') || ''), templateData).split('.')
+  let key = replaceVariables(element.getAttribute('key') || '', templateData)
+  // let [, ...keyPath] = replaceVariables(key, templateData).split('.')
   let tag = replaceVariables(element.getAttribute('tag') || 'span', templateData)
+  let defaultVal = element.getAttribute('default') || ''
 
   element.removeAttribute('tag')
   element.removeAttribute('key')
+  element.removeAttribute('default')
 
   // Create the element based on the users defined element or use a "span" element
   let el = element.ownerDocument.createElement(tag)
@@ -34,7 +37,9 @@ async function createElement(element: Element, templateData: TemplateData, data?
   }
 
   // Get the string from the json file
-  let val: string = keyPath.reduce<any>((obj, val) => obj && obj[val] && obj[val] || element.innerHTML, data || {}).toString()
+  // let val: string = keyPath.reduce<any>((obj, val) => obj && obj[val] && obj[val] || element.innerHTML, data || {}).toString()
+  let val = await client.trans(key)
+  if (!val && defaultVal) val = defaultVal
 
   // Replace the placeholders with actual data
   // This will replace ":languageValue" with the attribute value and "{{$templateValue}}" with the value from the template data

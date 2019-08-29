@@ -32,7 +32,7 @@ export type RouteCallback = string | RouteFunction | RouteClass | Promise<RouteF
 
 declare type RouteInfo = Promise<{
   route: Route | undefined
-  callback: Function | undefined
+  callback: ((client: Client) => string | object | any[] | Response | undefined) | undefined
 } | null>
 
 export interface Domain {
@@ -71,7 +71,6 @@ export class Router {
   public static async route(route: UrlWithStringQuery, method: RequestMethod): RouteInfo {
     // Try to find the route
     let theRoute = this._find(route, method || 'get')
-
     if (theRoute) {
       // client.setRoute(theRoute)
 
@@ -709,7 +708,7 @@ export class Router {
 
         for (let r of domain.routes) {
           // for (let r of this._routes) {
-          if (r.pathAlias instanceof RegExp) break
+          if (r.pathAlias instanceof RegExp) continue
           let crumbs = r.pathAlias.split('/').filter(i => i.trim().length > 0)
           let dynParams = crumbs.filter(i => i.startsWith(':'))
           // make sure the path lengths are the same and parameters exist

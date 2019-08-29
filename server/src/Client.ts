@@ -372,7 +372,7 @@ export class Client {
     let store = Storage.mount('resources')
     let [file, ...keyPath] = key.split('.')
     let transValue = ''
-    if (await store.exists(path.posix.join('lang', this.getLocale(), `${file}.json`))) {
+    if (await store.exists(path.join('lang', this.getLocale(), `${file}.json`))) {
       let langData = JSON.parse((await store.read(path.posix.join('lang', this.getLocale(), `${file}.json`)) || '{}').toString()) as Lang
       transValue = keyPath.reduce<any>((obj, val) => obj && obj[val] && obj[val] || '', langData || {}).toString()
     }
