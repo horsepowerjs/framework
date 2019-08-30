@@ -156,4 +156,8 @@ export default class AmazonS3Storage extends Storage<S3Options> {
     return AmazonS3Storage.connections.find(i => i.name == this.name)
   }
 
+  public info(objectPath: string): Promise<object> {
+    return Promise.resolve({})
+  }
+
 }

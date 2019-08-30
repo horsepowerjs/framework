@@ -1,6 +1,6 @@
 {
     "name": "@horsepower/server",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "The master server for the horsepower http server.",
     "main": "lib/index.js",
     "homepage": "https://horsepowerjs.com",

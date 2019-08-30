@@ -165,4 +165,8 @@ export default class FTPStorage extends Storage<AccessOptions> {
   private getConnection(name: string) {
     return FTPStorage.connections.find(c => c.name == name)
   }
+
+  public info(objectPath: string): Promise<object> {
+    return Promise.resolve({})
+  }
 }

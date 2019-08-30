@@ -273,4 +273,8 @@ export default class MongoStorage extends Storage<MongoOptions> {
   private getConnection(name: string) {
     return MongoStorage.connections.find(c => c.name == name)
   }
+
+  public info(objectPath: string): Promise<object> {
+    return Promise.resolve({})
+  }
 }
