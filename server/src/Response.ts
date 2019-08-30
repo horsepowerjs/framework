@@ -1,7 +1,6 @@
 import { OutgoingHttpHeaders } from 'http'
 import { Router } from '@horsepower/router'
 import { Client } from './Client'
-import { Storage } from '@horsepower/storage';
 
 export interface CookieOptions {
   path?: string
@@ -87,7 +86,7 @@ export class Response {
    * @returns
    * @memberof Response
    */
-  public setBuffer(data: Buffer) {
+  private setBuffer(data: Buffer) {
     this._buffer = data
     return this.setContentLength(data.byteLength)
   }
@@ -98,6 +97,7 @@ export class Response {
    * @param {string} path The path to the file on the server
    * @returns
    * @memberof Response
+   * @internal
    */
   public setFile(path: string) {
     this._filePath = path
@@ -163,6 +163,11 @@ export class Response {
    */
   public setCookie(key: string, value: string, options: CookieOptions) {
     this._cookies.push(Object.assign<Cookie, CookieOptions>({ key, value }, options))
+    return this
+  }
+
+  public setType(lookup: string): this {
+
     return this
   }
 
@@ -270,10 +275,62 @@ export class Response {
   public download(name: string, path: string, code?: number): this
   public download(name: string, path: string | Buffer, code: number = 200): this {
     if (typeof path == 'string') this.setFile(path)
-    if (path instanceof Buffer) this.setBuffer(path)
+    else if (path instanceof Buffer) this.setBuffer(path)
+    else return this
     return this
       .setCode(code)
       .setHeader('Content-Disposition', `attachment; filename="${name}"`)
+  }
+
+  /**
+   * Sends a file to the client without downloading the file.
+   *
+   * @param {string} path The path to the file.
+   * @param {number} [code] The http code.
+   * @returns {this}
+   * @memberof Response
+   */
+  public file(path: string, code?: number): this
+  /**
+   * Sends a file to the client without downloading the file.
+   *
+   * @param {Buffer} data The file contents as a buffer.
+   * @param {number} [code] The http code.
+   * @returns {this}
+   * @memberof Response
+   */
+  public file(data: Buffer, code?: number): this
+  public file(info: string | Buffer, code: number = 200) {
+    if (typeof info == 'string') this.setFile(info)
+    else if (info instanceof Buffer) this.setBuffer(info)
+    return this.setCode(code)
+  }
+
+  /**
+   * Flashes session data that can be used on the next request.
+   *
+   * @param {string} key The session item key
+   * @param {string} value The session item value
+   * @returns {this}
+   * @memberof Response
+   */
+  public with(key: string, value: string): this
+  /**
+   * Flashes session data that can be used on the next request.
+   *
+   * @param {object} data An object where the key is the item key and the value is the item value.
+   * @returns {this}
+   * @memberof Response
+   */
+  public with(data: object): this
+  public with(a: string | object, b?: string): this {
+    if (this._client.session) {
+      if (typeof a == 'string' && typeof b == 'string')
+        this._client.session.flash(a, b)
+      else if (typeof a == 'object')
+        Object.entries(a).forEach(i => this._client.session && this._client.session.flash(i[0], i[1]))
+    }
+    return this
   }
 
   /**
