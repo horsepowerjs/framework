@@ -2,7 +2,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as helpers from './helper'
 import { Client } from '.'
-import { horsepowerTemplate } from '@horsepower/template'
+import { HorsepowerTemplate } from '@horsepower/template'
 import { Storage } from '@horsepower/storage'
 import { getConfig } from './helper';
 import { Options } from 'html-minifier'
@@ -36,20 +36,23 @@ export class Template {
     let html = ''
     if (typeof client.response.templatePath == 'string') {
       let filePath = client.response.templatePath
-      let options = Object.assign({}, client.response.templateData, helpers, {
-        path: client.path,
-        get: client.data.getAll,
-        post: client.data.postAll,
-        request: client.data.requestAll,
-        session: client.session as import('@horsepower/session').Session,
-        params: client.route.params
-      })
+      let options = Object.assign({}, client.response.templateData,
+        helpers,
+        {
+          path: client.path,
+          get: client.data.getAll,
+          post: client.data.postAll,
+          request: client.data.requestAll,
+          session: client.session as import('@horsepower/session').Session,
+          params: client.route.params
+        }
+      )
       let file = path.join(this._root, filePath)
       // Render horsepower files
       let viewConfig = getConfig<ViewConfig>('view')
       if (filePath.endsWith('.mix')) {
         let minify = viewConfig && viewConfig.minifier || undefined
-        html = await horsepowerTemplate.render(client, options, minify)
+        html = await HorsepowerTemplate.render(client, options, minify)
       }
       // Render pug files
       else if (filePath.endsWith('.pug')) {

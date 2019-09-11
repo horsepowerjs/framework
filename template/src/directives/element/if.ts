@@ -1,15 +1,14 @@
-import { Template } from '../helpers/extend'
-import { step, replaceVariables } from '../helpers'
-import { Mixin } from '../helpers/mixin'
-import { TemplateData } from '..'
-import { Client } from '@horsepower/server';
+import { Template } from '../../helpers/extend'
+import { step, toExec } from '../../helpers'
+import { Client } from '@horsepower/server'
+import { Context, runInContext } from 'vm'
 
 // <if :="{{$i}} == 0">...</if>
 // <elif :="{{$i}} == 1">...</elif>
 // <elif :="{{$i}} == 2 && {{$j}} == 3">...</elif>
 // <else>...</else>
 
-export default async function (client: Client, root: Template, element: Element, data: TemplateData, mixins: Mixin[]) {
+export default async function (context: Context, client: Client, root: Template, element: Element) {
   if (!element.ownerDocument) return
   let nodes: Element[] = [element]
 
@@ -39,14 +38,9 @@ export default async function (client: Client, root: Template, element: Element,
     }
     // the node is an if/elif node, test its conditions
     else {
-      let condition = node.getAttribute(':') || 'false'
+      let condition = toExec(node.getAttribute(':') || 'false')
+      let result = !!runInContext(condition || '', context)
 
-      // Replace all the variables within the condition
-      condition = replaceVariables(condition, data)
-
-      // Test the condition as a boolean value
-      // TODO: Either make the condition more secure or find a way to remove the usage of eval
-      let result = !!eval(condition)
       // The test failed go to the next node
       if (!result) continue
       // The test succeeded add the children to the fragment
@@ -54,7 +48,7 @@ export default async function (client: Client, root: Template, element: Element,
         frag.appendChild(child.cloneNode(true))
       }
     }
-    step(client, root, frag, data, mixins)
+    step(context, client, root, frag)
     element.replaceWith(frag)
     break
   }

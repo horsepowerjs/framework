@@ -33,6 +33,7 @@ export class Session {
   private _started: boolean = false
   private _record: SessionRecord = this._originalRecord
   private store: Storage<object>
+  private algorithm: string = 'aes-192-cbc'
 
   private get file() { return path.join('horsepower', 'sessions', this._record.id + '.sess') }
   public get csrf() { return this._record.csrf || '' }
@@ -89,7 +90,7 @@ export class Session {
     if (this._store == 'file') {
       if (await this.store.exists(this.file)) {
         // A session with this id already exists, lets load it
-        this._record = JSON.parse((await this.store.read(this.file)).toString())
+        await this._load()
         this._record.cookie.expires = expires
         this._record.expires = expires
       } else {
@@ -294,9 +295,43 @@ export class Session {
 
   private async _save() {
     if (this._record.id && this._store == 'file') {
-      return await this.store.write(this.file, JSON.stringify(this._record))
+      let app = getConfig<AppSettings>('app')
+      if (!app || !app.appKey) throw Error('An "appKey" must be set in "config/app.js" to save sessions.')
+
+      // Generate the the cipher
+      const pass = app.appKey
+      const key = await new Promise<Buffer>(r => crypto.scrypt(pass, pass, 24, (err, buff) => r(buff)))
+      const iv = Buffer.alloc(16)
+      const cipher = crypto.createCipheriv(this.algorithm, key, iv)
+
+      // Encrypt the json that will be stored
+      let encrypted = cipher.update(JSON.stringify(this._record), 'utf8', 'hex')
+      encrypted += cipher.final('hex')
+
+      return await this.store.write(this.file, encrypted)
     }
     return false
+  }
+
+  private async _load() {
+    let app = getConfig<AppSettings>('app')
+    if (!app || !app.appKey || app.appKey.length < 32) throw Error('An "appKey" must be set and be at least 32 characters in "config/app.js" to load sessions.')
+
+    // Read the data from the store
+    let data = (await this.store.read(this.file)).toString()
+
+    // Generate the the cipher
+    const pass = app.appKey
+    const key = await new Promise<Buffer>(r => crypto.scrypt(pass, pass, 24, (err, buff) => r(buff)))
+    const iv = Buffer.alloc(16)
+    const decipher = crypto.createDecipheriv(this.algorithm, key, iv)
+
+    // Decode the data
+    let decrypted = decipher.update(data, 'hex', 'utf8')
+    decrypted += decipher.final('utf8')
+
+    // Parse the json that is stored in the session file
+    this._record = JSON.parse(decrypted)
   }
 
   private _generateHash() {

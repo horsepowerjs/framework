@@ -1,29 +1,25 @@
-import { Template, parseFile, step/* , getData */ } from './helpers'
+import { Template, parseFile, step } from './helpers'
 import extend from './helpers/extend'
-import { getMixins } from './helpers/mixin'
 import { minify, Options } from 'html-minifier'
 import { Client } from '@horsepower/server'
 import * as vm from 'vm'
-import { Form, Data } from './classes'
 
 export interface TemplateData {
   originalData: { [key: string]: any }
-  scopes: {
-    reference: string
-    data: { [key: string]: any }
-  }[]
 }
 
 export type Nullable<T> = T | null | undefined
 
-export class horsepowerTemplate {
+export class HorsepowerTemplate {
 
   private templateData: TemplateData
   private readonly client: Client
+  private context: vm.Context
 
   private constructor(client: Client, options: TemplateData) {
     this.client = client
     this.templateData = options
+    this.context = vm.createContext(this.templateData.originalData)
   }
 
   /**
@@ -35,13 +31,12 @@ export class horsepowerTemplate {
    */
   public async build(tpl: Template): Promise<Template> {
     let rootTpl = await extend(tpl)
-    let mixins = getMixins(rootTpl)
-    await step(this.client, rootTpl, rootTpl.document, this.templateData, mixins)
+    // let mixins = getMixins(rootTpl)
+    await step(this.context, this.client, rootTpl, rootTpl.document)
     if (rootTpl.document.documentElement) {
-      let context = vm.createContext(this.templateData.originalData)
       rootTpl.document.documentElement.innerHTML =
         rootTpl.document.documentElement.innerHTML
-          .replace(/\{\{(.+?)\}\}/gms, (full, val) => vm.runInContext(val, context)) //getData(val, this.templateData))
+          .replace(/\{\{(.+?)\}\}/gms, (full, val) => vm.runInContext(val, this.context)) //getData(val, this.templateData))
     }
     return rootTpl
   }
@@ -58,12 +53,12 @@ export class horsepowerTemplate {
    */
   public static async render(client: Client, data: object = {}, minifyOptions?: Options): Promise<string> {
     try {
-      data = Object.assign(data, { Form: new Form(data as Data) })
+      data = Object.assign(data/*,  { Form: new Form(data as Data) } */)
       let file = client.response.templatePath
       if (!file) return ''
-      let templateData: TemplateData = { originalData: {}, scopes: [] }
+      let templateData: TemplateData = { originalData: {}/* , scopes: [] */ }
       templateData.originalData = Object.assign<object, object>(templateData.originalData, data)
-      let hpTpl = new horsepowerTemplate(client, templateData)
+      let hpTpl = new HorsepowerTemplate(client, templateData)
       let html = (await hpTpl.build(await parseFile(file))).dom.serialize()
 
       let defaultMinifyOptions = {
@@ -81,7 +76,7 @@ export class horsepowerTemplate {
         minifyCSS: true,
         minifyJS: true
       }
-
+      // console.log(html)
       return minify(html, minifyOptions ? Object.assign(defaultMinifyOptions, minifyOptions) : defaultMinifyOptions)
     } catch (e) {
       throw e

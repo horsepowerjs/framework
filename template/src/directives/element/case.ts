@@ -1,8 +1,7 @@
-import { Template } from '../helpers/extend';
-import { step, replaceHolders } from '../helpers';
-import { Mixin } from '../helpers/mixin';
-import { TemplateData } from '..';
-import { Client } from '@horsepower/server';
+import { Template } from '../../helpers/extend'
+import { step, toExec } from '../../helpers'
+import { Client } from '@horsepower/server'
+import { Context, runInContext } from 'vm'
 
 // <case :="{{$item}}">
 //   <when :="1">...</when>
@@ -10,11 +9,10 @@ import { Client } from '@horsepower/server';
 //   <default>...</default>
 // </case>
 
-export default async function (client: Client, root: Template, element: Element, data: TemplateData, mixins: Mixin[]) {
+export default async function (context: Context, client: Client, root: Template, element: Element) {
   if (!element.ownerDocument) return
   let nodes: Element[] = Array.from(element.querySelectorAll('when, default'))
-
-  let value = replaceHolders(element.getAttribute(':') || 'false', data)
+  let value = toExec(element.getAttribute(':') || 'false')
 
   let frag = element.ownerDocument.createDocumentFragment()
   // Loop over all the when/default nodes
@@ -28,8 +26,7 @@ export default async function (client: Client, root: Template, element: Element,
     // the node is a when node, test its conditions
     else {
       let condition = node.getAttribute(':') || 'false'
-      let result = replaceHolders(condition, data) == value
-      // let result = !!eval(replaceHolders(condition, data))
+      let result = runInContext(`${value}==${toExec(condition)}`, context)
       // The test failed go to the next node
       if (!result) continue
       // The test succeeded add the children to the fragment
@@ -37,7 +34,7 @@ export default async function (client: Client, root: Template, element: Element,
         frag.appendChild(child.cloneNode(true))
       }
     }
-    step(client, root, frag, data, mixins)
+    step(context, client, root, frag)
     element.replaceWith(frag)
     break
   }

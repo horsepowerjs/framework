@@ -1,3 +1,5 @@
+import * as crypto from 'crypto'
+
 export function slug(text: string, slug: string = '-'): string {
   const esc = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   return text
@@ -50,4 +52,8 @@ export function json(data: any) {
 
 export function entities(text: string) {
   return text.replace(/[\u00A0-\u9999<>\&]/gim, (i) => '&#' + i.charCodeAt(0) + ';')
+}
+
+export function md5(text: string) {
+  return crypto.createHash('md5').update(text).digest('hex')
 }

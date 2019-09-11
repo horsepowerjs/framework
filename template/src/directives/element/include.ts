@@ -1,11 +1,9 @@
 import * as path from 'path'
-import * as fs from 'fs'
-import { Template } from '../helpers/extend'
-import { fragmentFromFile, step, replaceVariables, makeFragment } from '../helpers'
-import { Mixin } from '../helpers/mixin'
-import { TemplateData } from '..'
+import { Template } from '../../helpers/extend'
+import { step, makeFragment, toExec } from '../../helpers'
 import { Client } from '@horsepower/server'
 import { Storage } from '@horsepower/storage'
+import { Context, runInContext } from 'vm'
 
 // <include file="../abc/123"></include>
 // <require file="../abc/123"></require>
@@ -20,30 +18,32 @@ import { Storage } from '@horsepower/storage'
  * @param {TemplateData} data The template data
  * @param {Mixin[]} mixins
  */
-export async function includeBlock(client: Client, root: Template, element: Element, data: TemplateData, mixins: Mixin[]) {
+export async function includeBlock(context: Context, client: Client, root: Template, element: Element) {
   let inclFileName = element.getAttribute('file')
-  if (inclFileName && element.ownerDocument && inclFileName.length > 0) {
-    inclFileName = replaceVariables(inclFileName, data)
+  if (typeof inclFileName == 'string' && element.ownerDocument && inclFileName.length > 0) {
+    inclFileName = <string>(runInContext(toExec(inclFileName), context) || '')
     inclFileName = path.join('views', !inclFileName.endsWith('.mix') ? inclFileName + '.mix' : inclFileName)
     let resources = Storage.mount('resources')
     if (await resources.exists(inclFileName)) {
       let content = (await resources.read(inclFileName)).toString()
       let frag = makeFragment(content)
-      step(client, root, frag, data, mixins)
+      step(context, client, root, frag)
       frag && element.replaceWith(frag)
     } else {
       let fallback = element.getAttribute('else')
       if (fallback) {
-        fallback = replaceVariables(fallback, data)
+        fallback = toExec(fallback)
         fallback = path.join('views', !fallback.endsWith('.mix') ? fallback + '.mix' : fallback)
         if (await resources.exists(fallback)) {
           let content = (await resources.read(fallback)).toString()
           let frag = makeFragment(content)
-          step(client, root, frag, data, mixins)
+          step(context, client, root, frag)
           frag && element.replaceWith(frag)
         } else {
           element.remove()
         }
+      } else {
+        element.remove()
       }
     }
   }
@@ -58,20 +58,23 @@ export async function includeBlock(client: Client, root: Template, element: Elem
  * @param {TemplateData} data The template data
  * @param {Mixin[]} mixins
  */
-export async function requireBlock(client: Client, root: Template, element: Element, data: TemplateData, mixins: Mixin[]) {
+export async function requireBlock(context: Context, client: Client, root: Template, element: Element) {
   let inclFileName = element.getAttribute('file')
   if (inclFileName && element.ownerDocument && inclFileName.length > 0) {
-    inclFileName = replaceVariables(inclFileName, data)
+    inclFileName = <string>(runInContext(toExec(inclFileName), context) || '')
     inclFileName = path.join('views', !inclFileName.endsWith('.mix') ? inclFileName + '.mix' : inclFileName)
     let resources = Storage.mount('resources')
     if (await resources.exists(inclFileName)) {
       let content = (await resources.read(inclFileName)).toString()
       let frag = makeFragment(content)
-      step(client, root, frag, data, mixins)
+      step(context, client, root, frag)
       frag && element.replaceWith(frag)
     } else {
       element.remove()
       throw new Error(`Could not find template "${inclFileName}"`)
     }
+  } else {
+    element.remove()
+    throw new Error(`Could not find template "${inclFileName}"`)
   }
 }

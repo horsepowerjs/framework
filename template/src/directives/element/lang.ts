@@ -1,12 +1,11 @@
-import { Template } from '../helpers/extend'
-import { Client, Lang } from '@horsepower/server'
-import { TemplateData } from '..'
-import { replaceVariables } from '../helpers'
+import { Template } from '../../helpers/extend'
+import { Client } from '@horsepower/server'
+import { Context, runInContext } from 'vm'
 
-export default async function (client: Client, root: Template, element: Element, templateData: TemplateData) {
+export default async function (context: Context, client: Client, root: Template, element: Element) {
   if (element.ownerDocument) {
     // let text = await client.trans(replaceVariables(element.getAttribute('key') || '', templateData))
-    return element.replaceWith(await createElement(client, element, templateData) as Element)
+    return element.replaceWith(await createElement(client, element, context) as Element)
     // let store = Storage.mount('resources')
     // let [file] = (element.getAttribute('key') || '').split('.')
     // if (await store.exists(path.join('lang', client.getLocale(), `${file}.json`))) {
@@ -14,15 +13,16 @@ export default async function (client: Client, root: Template, element: Element,
     //   return element.replaceWith(await createElement(client, element, templateData, langData) as Element)
     // }
   }
-  element.replaceWith(await createElement(client, element, templateData) as Element)
+  element.replaceWith(await createElement(client, element, context) as Element)
 }
 
-async function createElement(client: Client, element: Element, templateData: TemplateData, data?: Lang) {
+async function createElement(client: Client, element: Element, context: Context) {
   if (!element.ownerDocument) return
-  let key = replaceVariables(element.getAttribute('key') || '', templateData)
-  // let [, ...keyPath] = replaceVariables(key, templateData).split('.')
-  let tag = replaceVariables(element.getAttribute('tag') || 'span', templateData)
-  let defaultVal = element.getAttribute('default') || ''
+  let key = (element.getAttribute('key') || '').replace(/\{\{(.+?)\}\}/g, (full, key) => {
+    try { return runInContext(key, context) } catch (e) { return full }
+  })
+  let tag = element.getAttribute('tag') || 'span'
+  let defaultVal = element.getAttribute('default') || element.innerHTML || ''
 
   element.removeAttribute('tag')
   element.removeAttribute('key')
@@ -37,17 +37,19 @@ async function createElement(client: Client, element: Element, templateData: Tem
   }
 
   // Get the string from the json file
-  // let val: string = keyPath.reduce<any>((obj, val) => obj && obj[val] && obj[val] || element.innerHTML, data || {}).toString()
   let val = await client.trans(key)
   if (!val && defaultVal) val = defaultVal
 
+  // Replace placeholders in the translations such as ":name" or ":time"
+  val = val.split(/\s/).map(i => i.startsWith(':') ? runInContext(i.replace(/^:/, ''), context) : i).join(' ')
+
   // Replace the placeholders with actual data
   // This will replace ":languageValue" with the attribute value and "{{$templateValue}}" with the value from the template data
-  for (let i of element.attributes) {
-    if (i.name.startsWith(':')) {
-      val = val.replace(new RegExp(i.name, 'g'), replaceVariables(i.value, templateData))
-    }
-  }
+  // for (let i of element.attributes) {
+  //   if (i.name.startsWith(':')) {
+  //     // val = val.replace(new RegExp(i.name, 'g'), replaceVariables(i.value, templateData))
+  //   }
+  // }
 
   el.innerHTML = val
   return el

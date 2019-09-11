@@ -1,6 +1,6 @@
-import { replaceVariables } from '../helpers'
-import { TemplateData } from '..'
 import { isProduction } from '@horsepower/server'
+import { Context, runInContext } from 'vm'
+import { toExec } from '../../helpers'
 
 // <debug log="{{$test}}"></debug>
 // <debug info="test"></debug>
@@ -15,7 +15,7 @@ import { isProduction } from '@horsepower/server'
 
 // TODO: Add support for self closing tag: `<debug ... />`, currently this breaks the application
 // TODO: Either make the `eval` more secure or find a way to remove the usage of `eval`
-export default async function (element: Element, data: TemplateData) {
+export default async function (context: Context, element: Element) {
   // If this is production do not debug just remove the element unless the element has the prod flag
   if (isProduction() && !element.hasAttribute('prod')) return element.remove()
 
@@ -32,21 +32,20 @@ export default async function (element: Element, data: TemplateData) {
   // Remove the element so it doesn't display in the output
   element.remove()
 
-  // log everything
-  if (log) console.log(dataToLog(shouldEval, log, data))
-  if (info) console.info(dataToLog(shouldEval, info, data))
-  if (warn) console.warn(dataToLog(shouldEval, warn, data))
-  if (error) console.error(dataToLog(shouldEval, error, data))
-}
-
-function dataToLog(shouldEval: boolean, string: string, data: any) {
-  string = replaceVariables(string, data)
-  if (shouldEval) {
-    try {
-      return eval(string)
-    } catch (e) {
-      return string
+  function dataToLog(shouldEval: boolean, string: string) {
+    if (shouldEval) {
+      try {
+        return runInContext(toExec(string), context)
+      } catch (e) {
+        return string
+      }
     }
+    return string
   }
-  return string
+
+  // log everything
+  if (log) console.log(dataToLog(shouldEval, log))
+  if (info) console.info(dataToLog(shouldEval, info))
+  if (warn) console.warn(dataToLog(shouldEval, warn))
+  if (error) console.error(dataToLog(shouldEval, error))
 }

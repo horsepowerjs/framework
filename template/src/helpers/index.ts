@@ -1,134 +1,28 @@
 import { readFile } from 'fs'
-import * as vm from 'vm'
 import { JSDOM } from 'jsdom'
 
-// The template directives
+// The element template directives
 import { Template } from './extend'
-import block from '../directives/block'
-import ifBlock from '../directives/if'
-import debugBlock from '../directives/debug'
-import eachBlock from '../directives/each'
-import forBlock from '../directives/for'
-import langBlock from '../directives/lang'
-import csrfBlock from '../directives/csrf'
-import caseBlock from '../directives/case'
-import { includeBlock, requireBlock } from '../directives/include'
-import { includeMixin, Mixin } from './mixin'
-import { TemplateData, Nullable } from '..'
-import { Client } from '@horsepower/server';
+import block from '../directives/element/block'
+import ifBlock from '../directives/element/if'
+import debugBlock from '../directives/element/debug'
+import eachBlock from '../directives/element/each'
+import forBlock from '../directives/element/for'
+import langBlock from '../directives/element/lang'
+import csrfBlock from '../directives/element/csrf'
+import caseBlock from '../directives/element/case'
+import { includeBlock, requireBlock } from '../directives/element/include'
+
+// The element template attribute directives
+import hideAttr from '../directives/attribute/hide'
+import classAttr from '../directives/attribute/class'
+import bindAttr from '../directives/attribute/bind'
+
+import { Client } from '@horsepower/server'
+import { Context } from 'vm'
 
 export * from './files'
 export * from './extend'
-
-// /**
-//  * Gets the data that will be searched
-//  *
-//  * @export
-//  * @param {string} text The variable name like: "$example"
-//  * @param {TemplateData} data The template data
-//  * @param {string} [scope] The optional scope
-//  * @returns
-//  */
-// export function getData(text: string, data: TemplateData, context: vm.Context, scope?: string) {
-//   // let dataToSearch = data.originalData
-//   // if (typeof scope == 'string') {
-//   //   dataToSearch = data.scopes && data.scopes.length > 0 ?
-//   //     (data.scopes.find(i => i.reference == scope) || { data: {} }).data : {}
-//   // }
-//   // Call function
-//   // if (text.includes('(') && text.includes(')')) {
-//   // let matches = text.match(/(.+)\((.*)\)/)
-//   // if (matches && matches[1]) {
-//   // let params = matches[2] && (text.match(/(["'])(?:(?=(\\?))\2.)*?\1/g) as RegExpMatchArray)
-//   //   .map(i => i.replace(/^('|")|('|")$/g, ''))
-//   // let params = matches[2] && matches[2].trim().replace(/^('|")|('|")$/g, '').split(',') || []
-//   // let func = find(matches[1], dataToSearch)
-//   // if (typeof func == 'function') {
-//   // let context = vm.createContext(dataToSearch)
-//   // return vm.runInContext(text, context)
-//   // }
-//   // }
-//   // }
-//   // return find(text.replace(/^\$/, ''), dataToSearch)
-//   // return find(text.replace(/^\{\{|\}\}$/g, ''), dataToSearch)
-// }
-
-/**
- * Gets an array of variables within a string
- * Formatted as: `$example`
- *
- * @export
- * @param {string} string The string to search
- * @returns {string[]} An array of matched variables
- */
-export function getVariableValues(string: string): string[] {
-  let match = ((string || '').match(/\{\{.+?\}\}/) || [])[0] || ''
-  return [...new Set(match.match(/\$(?!(\d|\.))[.\w]+/g) || [])]
-}
-
-/**
- * Gets an array of variable placeholders within a string
- * Formatted as: `{{$example}}`
- *
- * @export
- * @param {string} string The string to search
- * @returns {string[]} Aan array of matched placeholders
- */
-export function getVariables(string: string): string[] {
-  let match = ((string || '').match(/\{\{.+?\}\}/) || [])[0] || ''
-  return [...new Set(match.match(/\{\{\$(?!(\d|\.))[.\w]+\}\}/g) || [])]
-}
-
-export function getVariableStrings(string: string): string[] {
-  let match = ((string || '').match(/\{\{.+?\}\}/g) || [])
-  return [...new Set(match.map(i => i.replace(/^\{\{\$|\}\}$/g, '')))]
-  // return [...new Set(match.match(/(?!(\d|\.))[.\w]+/g) || [])]
-}
-
-/**
- * Gets variable information about a string
- *
- * @export
- * @param {string} string The string to analyze
- * @param {*} data The data that is associated to the variables
- * @returns
- */
-export function getStringInfo(string: string, data: any) {
-  return getVariableStrings(string).map(key => {
-    let breadcrumb = key.split('.')
-    let scope = breadcrumb.length > 1 ? breadcrumb[0] : null
-    let dataObject = getScopeData(breadcrumb.join('.'), data, scope)
-    return { key, data: dataObject }
-  })
-}
-
-/**
- * Replaces the variables in a string with actual data
- *
- * @export
- * @param {string} string The string
- * @param {*} data Data that will replace the variables
- * @returns
- */
-export function replaceVariables(string: string, data: any) {
-  getStringInfo(string, data).forEach(i => {
-    string = string.replace(variableMatch(i.key), i.data)
-  })
-  return string
-}
-
-/**
- * Removes the first element in a variable
- *
- * @export
- * @param {string} text The variable
- * @returns
- */
-export function dropFirst(text: string) {
-  let r = text.replace(/^\{\{|\}\}$/g, '').split('.')
-  r.shift()
-  return r.join('.')
-}
 
 /**
  * Finds the data in a object/array if it exists
@@ -157,9 +51,13 @@ export function find(query: string, data: object | any[]): any | undefined {
  * @returns {string} The resulting data
  */
 export function replaceHolders(text: string, data: object): string {
-  return text.replace(/\{\{\$.+\}\}/g, (i) => {
-    return JSON.stringify(find(i.replace(/^\{\{\$|\}\}$/g, ''), data))
+  return text.replace(/\{\{.+\}\}/g, (i) => {
+    return JSON.stringify(find(i.replace(/^\{\{|\}\}$/g, ''), data))
   })
+}
+
+export function toExec(text: string) {
+  return text.replace(/\b\{\{(.+)\}\}\b/g, '$1')
 }
 
 /**
@@ -182,9 +80,9 @@ export function makeFragment(element: string | Buffer | Element): DocumentFragme
  * @param {string} file The path to the file
  * @returns {Promise<DocumentFragment>} The fragment from the file
  */
-export function fragmentFromFile(file: string): Promise<DocumentFragment> {
+export function fragmentFromFile(file: string, data: string | Buffer | Element): Promise<DocumentFragment> {
   return new Promise<DocumentFragment>(resolve => {
-    readFile(file, (err, data) => {
+    readFile(file, (err) => {
       resolve(makeFragment(data))
     })
   })
@@ -221,101 +119,75 @@ export function isHTMLElement(windowScope: Window | JSDOM, clone: any): clone is
  * @param {Mixin[]} mixins
  * @returns {Promise<void>}
  */
-export async function step(client: Client, root: Template, node: Document | Element | Node | DocumentFragment, data: TemplateData, mixins: Mixin[]): Promise<any> {
+export async function step(context: Context, client: Client, root: Template, node: Document | Element | Node | DocumentFragment): Promise<any> {
   for (let child of node.childNodes) {
-    if (child.nodeType == root.dom.window.Node.TEXT_NODE && child.textContent) {
-      // child.textContent.match(/\{\{(.+)\}\}/) && console.log('step', JSON.stringify(data.scopes))
-      // Replace text node placeholders
-      // child.textContent = child.textContent.replace(/\{\{(.+)\}\}/g, (full, v) => getData(v, data))
-    } else if (child instanceof root.dom.window.Element) {
-      let name = child.nodeName.toLowerCase()
+    if (child instanceof root.dom.window.HTMLElement) {
+      await attributes(context, client, root, child)
       // Elements based on tag name
-      switch (name) {
+      switch (child.nodeName.toLowerCase()) {
         case 'include':
-          await includeBlock(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
+          await includeBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'require':
-          await requireBlock(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
+          await requireBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'block':
-          await block(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
-        case 'include':
-          await includeMixin(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
+          await block(context, client, root, child)
+          return await step(context, client, root, node)
         case 'if':
-          await ifBlock(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
+          await ifBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'case':
-          await caseBlock(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
+          await caseBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'each':
-          await eachBlock(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
+          await eachBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'for':
-          await forBlock(client, root, child, data, mixins)
-          return await step(client, root, node, data, mixins)
+          await forBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'lang':
-          await langBlock(client, root, child, data)
-          return await step(client, root, node, data, mixins)
+          await langBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'csrf':
-          await csrfBlock(client, root, child)
-          return await step(client, root, node, data, mixins)
+          await csrfBlock(context, client, root, child)
+          return await step(context, client, root, node)
         case 'debug':
-          await debugBlock(child, data)
-          return await step(client, root, node, data, mixins)
+          await debugBlock(context, child)
+          return await step(context, client, root, node)
         // Remove node since it's not part of a valid block group
         // Blocks cannot start with an "elif" or "else"
         case 'elif':
         case 'else':
-          await remove(child)
-          return await step(client, root, node, data, mixins)
+          remove(child)
+          return await step(context, client, root, node)
       }
       if (child.childNodes.length > 0) {
-        await step(client, root, child, data, mixins)
+        await step(context, client, root, child)
       }
     }
   }
 }
 
-/**
- * Creates a regular expression for a particular variable
- * * Find values between "{{" and "}}" and not between html tags "<" and ">"
- * * Variable must start with a "$" and is not followed by a "\d" or "."
- *    * Valid Examples: {{$cat}}, {{$i.name}}
- *    * Invalid Examples: {{$234}}, {{$.name}}
- *
- * @export
- * @param {string} key The variable without braces and dollar sign `a.b.c`
- * @returns {RegExp} The regular expression to match a variable
- */
-export function variableMatch(key: string, braces = true): RegExp {
-  if (braces)
-    return new RegExp(`\\{\\{(\\$(?!(\\d|\\.))\\b${key}\\b[.\\w]*)(?![^\\<]*\\>)\\}\\}`, 'g')
-  else
-    return new RegExp(`(\\$(?!(\\d|\\.))\\b${key}\\b[.\\w]*)(?![^\\<]*\\>)`, 'g')
-}
-
-/**
- * Gets data based on the scope of the search
- *
- * @export
- * @param {string} search The search `a.b.c`
- * @param {TemplateData} data The template data
- * @param {Nullable<string>} [scope] The scoped item
- * @param {(Nullable<string | number>)} [key] The key
- * @returns
- */
-export function getScopeData(search: string, data: TemplateData, scope?: Nullable<string>, key?: Nullable<string | number>) {
-  let dataToSearch = data.originalData
-  // console.log('scope', scope)
-  if (search.split('.').length == 1 && !scope) {
-    return data.originalData[search.replace(/^\$/, '')]
-  } if (typeof scope == 'string' && scope.length > 0) {
-    dataToSearch = data.scopes && data.scopes.length > 0 ?
-      (data.scopes.find(i => i.reference == scope.replace(/^\$/, '')) || { data: {} }).data : {}
+export async function attributes(context: Context, client: Client, root: Template, node: HTMLElement): Promise<any> {
+  for (let attr of node.attributes) {
+    let attrName = attr.name
+    if (attrName.startsWith(':') && attrName.length > 1) {
+      switch (attrName) {
+        // Sets "display:none" when evaluated to true
+        case ':hide':
+          await hideAttr(context, node)
+          break
+        // An object that evaluates each key as a class
+        // If the value is true then the class will be added
+        case ':class':
+          await classAttr(context, node)
+          break
+        // Bind the attribute to a value
+        default:
+          await bindAttr(context, node, attrName)
+          break
+      }
+    }
   }
-  // console.log(scope, search, dataToSearch)
-  // console.log('search', search, key, search.replace(new RegExp(`^\\$${scope}`), (key && ['string', 'number'].includes(typeof key) ? key : '').toString()).replace(/^\$/, ''))
-  return find(search.replace(new RegExp(`^\\$${scope}`), (key || search.replace(/^\$/, '')).toString()), dataToSearch)
 }

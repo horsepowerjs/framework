@@ -1,8 +1,7 @@
-import { Template } from '../helpers/extend';
-import { step } from '../helpers';
-import { Mixin } from '../helpers/mixin';
-import { TemplateData } from '..';
-import { Client } from '@horsepower/server';
+import { Template } from '../../helpers/extend'
+import { step } from '../../helpers'
+import { Client } from '@horsepower/server'
+import { Context } from 'vm'
 
 // <!-- Root blocks do not have content -->
 // <block name="xxx"></block>
@@ -10,7 +9,7 @@ import { Client } from '@horsepower/server';
 // <!-- Child blocks have content and fill the parent -->
 // <block name="xxx">...</block>
 
-export default async function (client: Client, root: Template, element: Element, data: TemplateData, mixins: Mixin[]) {
+export default async function (context: Context, client: Client, root: Template, element: Element) {
   let name = element.getAttribute('name')
   if (!element.ownerDocument) return
   let frag = element.ownerDocument.createDocumentFragment()
@@ -22,6 +21,6 @@ export default async function (client: Client, root: Template, element: Element,
       }
     }
   }
-  await step(client, root, frag, data, mixins)
+  await step(context, client, root, frag)
   element.replaceWith(frag)
 }

@@ -9,6 +9,8 @@ import * as mime from 'mime-types'
 import * as path from 'path'
 import * as url from 'url'
 import * as crypto from 'crypto'
+import * as zlib from 'zlib'
+import { Readable } from 'stream'
 
 import { serialize, CookieSerializeOptions } from 'cookie'
 
@@ -30,6 +32,7 @@ export interface AppSettings {
   port: number
   name?: string
   env?: string
+  appKey?: string
   session?: {
     store?: 'file'
     cookie?: CookieSerializeOptions
@@ -358,6 +361,9 @@ export class Server {
   private static async send(client: Client, req: http.IncomingMessage, res: http.ServerResponse) {
     if (!this.app) return
     let fileSize = client.response.contentLength
+    if (!fileSize && client.response.filePath) {
+      fileSize = (await fs.promises.stat(client.response.filePath)).size
+    }
     let start = 0, end = fileSize - 1 < start ? start : fileSize - 1
     // If the file is larger than the defined chunk size then send the file in chunks.
     // If the chunk size isn't set then default to 5,000,000 bytes per chunk.
@@ -444,17 +450,16 @@ export class Server {
         responseBody = client.response.body
       }
 
-      // Write the response headers
-      res.writeHead(client.response.code, <any>headers)
       // Write the response body
+      await this._zip(res, headers, client, responseBody)
       res.write(responseBody)
+
+      // End the response
       res.end()
     }
 
     // Execute the middleware termination commands
     await MiddlewareManager.run(client.route, client, 'terminate')
-
-    // client.session && await client.session.close()
   }
 
   private static async _readCacheTemplate(client: Client) {
@@ -488,5 +493,38 @@ export class Server {
       responseBody = client.response.body
     }
     return responseBody
+  }
+
+  private static async _zip(res: http.ServerResponse, headers: [string, string][], client: Client, data: Buffer | string) {
+    return new Promise(resolve => {
+      let accept = client.headers.get<string>('Accept-Encoding', '')
+
+      // Create a stream with the data
+      let r = new Readable()
+      r._read = () => { }
+      r.push(data)
+      r.push(null)
+
+      let zip: zlib.Gzip | zlib.Deflate | null = null
+
+      // Create a gzip compression if the browser supports it
+      if (accept.includes('gzip')) {
+        headers.push(['Content-Encoding', 'gzip'])
+        zip = zlib.createGzip()
+      }
+      // Create a deflate compression if the browser supports it
+      else if (accept.includes('deflate')) {
+        headers.push(['Content-Encoding', 'deflate'])
+        zip = zlib.createDeflate()
+      }
+
+      // Write the headers
+      res.writeHead(client.response.code, <any>headers);
+
+      // Zip the response or send without compression
+      (zip ? r.pipe(zip) : r).pipe(res)
+        .on('finish', () => resolve(true))
+        .on('error', () => resolve(false))
+    })
   }
 }
