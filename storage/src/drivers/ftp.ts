@@ -1,6 +1,9 @@
 import * as path from 'path'
+import * as fs from 'fs'
+import { ReadStream, WriteStream } from 'fs'
 import { Storage } from '../Storage'
-import { Duplex, Writable } from 'stream'
+import { Duplex, Writable, PassThrough } from 'stream'
+import { FileReadOptions } from './file'
 
 let Client: new () => Client
 // Check to see if the user has the dependency installed
@@ -168,5 +171,25 @@ export default class FTPStorage extends Storage<AccessOptions> {
 
   public info(objectPath: string): Promise<object> {
     return Promise.resolve({})
+  }
+
+  public async fileSize(filePath: string) {
+    let conn = this.getConnection(this.name)
+    if (!conn) return 0
+    filePath = this.forceRoot(filePath) as string
+    return await conn.client.size(filePath)
+  }
+
+  public async readStream(filePath: string, options: FileReadOptions = {}) {
+    let conn = this.getConnection(this.name)
+    let passThrough = new PassThrough
+    if (!conn) return passThrough
+    filePath = this.forceRoot(filePath) as string
+    conn.client.download(passThrough, filePath, options.start || undefined)
+    return passThrough
+  }
+
+  public writeStream(filePath: string, options?: object) {
+    return new WriteStream
   }
 }

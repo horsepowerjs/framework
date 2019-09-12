@@ -10,7 +10,7 @@ import * as path from 'path'
 import * as url from 'url'
 import * as crypto from 'crypto'
 import * as zlib from 'zlib'
-import { Readable } from 'stream'
+import { Readable, PassThrough } from 'stream'
 
 import { serialize, CookieSerializeOptions } from 'cookie'
 
@@ -265,7 +265,7 @@ export class Server {
         try {
           const pub = Storage.mount('public')
           if (await pub.isFile(urlInfo.pathname)) {
-            client.response.setFile(pub.toPath(urlInfo.pathname))
+            client.response.setStore(pub, urlInfo.pathname)
             return await this.send(client, req, res)
           }
         } catch (e) { }
@@ -361,31 +361,33 @@ export class Server {
   private static async send(client: Client, req: http.IncomingMessage, res: http.ServerResponse) {
     if (!this.app) return
     let fileSize = client.response.contentLength
-    if (!fileSize && client.response.filePath) {
-      fileSize = (await fs.promises.stat(client.response.filePath)).size
+    if (!fileSize && client.response.fileStore) {
+      let { store, file } = client.response.fileStore
+      fileSize = await store.fileSize(file)
     }
-    let start = 0, end = fileSize - 1 < start ? start : fileSize - 1
+    let start = 0, end: number | undefined = fileSize - 1 < start ? start : fileSize - 1
     // If the file is larger than the defined chunk size then send the file in chunks.
     // If the chunk size isn't set then default to 5,000,000 bytes per chunk.
-    if (fileSize > (this.app.chunkSize || 5e6)) {
+    if (fileSize > (this.app.chunkSize || 5e5)) {
       let range = (req.headers.range || '') as string
-      let positions = range.replace(/bytes=/, '').split('-')
-      start = parseInt(positions[0], 10)
-      end = positions[1] ? parseInt(positions[1], 10) : fileSize - 1
+      let positions = range.replace(/bytes=/, '').trim().split('-')
+      start = parseInt(positions[0] || '0', 10)
+      end = parseInt(positions[1] || (fileSize - 1).toString(), 10)
       let chunkSize = (end - start) + 1
-      client.response.setCode(206).setHeaders({
-        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-        'Accept-Ranges': 'bytes',
-        'Connection': 'Keep-Alive',
-        'Content-Length': chunkSize
-      })
+      if (!client.response.hasHeader('content-disposition')) client.response.setCode(206)
+      client.response
+        .setHeaders({
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Connection': 'Keep-Alive',
+          'Content-Length': chunkSize
+        })
     }
-    if (client.response.filePath) {
-      let contentType = mime.lookup(client.response.filePath) || 'text/plain'
+    if (client.response.fileStore) {
+      let { store, file } = client.response.fileStore
+      let contentType = mime.lookup(file) || 'text/plain'
       client.response.setHeader('Content-Type', contentType)
-      if (end < 1) {
-        end = await new Promise(r => client.response.filePath && fs.stat(client.response.filePath, (err, stat) => r(stat.size)))
-      }
+      // if (end < 1) end = await store.fileSize(file)
     }
 
     let headers: [string, string][] = []
@@ -420,19 +422,34 @@ export class Server {
       return
     }
 
-    let responseBody: string | Buffer = ''
-
     // Generate the response body
-    if (client.response.filePath) {
+    if (client.response.fileStore) {
       // We are sending a file to the user, open it and read it
       // If the file is sent in chunks this will handle it
       // Write the response headers
       res.writeHead(client.response.code, <any>headers)
-      let stream: fs.ReadStream = fs.createReadStream(client.response.filePath, { start, end })
-        .on('open', () => stream.pipe(<any>res))
-        .on('close', () => res.end())
+
+      let { store, file } = client.response.fileStore
+
+      // let stream: fs.ReadStream = fs.createReadStream(store.toPath(file), { start, end })
+      let stream: PassThrough = (await store.readStream(file, { start, end, fileSize }))
+      stream.on('data', chunk => res.write(chunk))
+        .on('end', async () => {
+          // res.end()
+          // // Execute the middleware termination commands
+          // await MiddlewareManager.run(client.route, client, 'terminate')
+        })
+        // .on('open', () => stream.pipe(res))
+        .on('close', async () => {
+          res.end()
+          console.log('end')
+          // Execute the middleware termination commands
+          await MiddlewareManager.run(client.route, client, 'terminate')
+        })
         .on('error', err => res.end(err))
+
     } else {
+      let responseBody: string | Buffer = ''
       if (client.response.templatePath) {
         if (client.response.loadFromCache) {
           responseBody = await this._readCacheTemplate(client)
@@ -456,10 +473,11 @@ export class Server {
 
       // End the response
       res.end()
+
+      // Execute the middleware termination commands
+      await MiddlewareManager.run(client.route, client, 'terminate')
     }
 
-    // Execute the middleware termination commands
-    await MiddlewareManager.run(client.route, client, 'terminate')
   }
 
   private static async _readCacheTemplate(client: Client) {

@@ -1,4 +1,5 @@
 import { Storage } from '..'
+import { PassThrough } from 'stream'
 
 let S3: S3
 try {
@@ -156,8 +157,46 @@ export default class AmazonS3Storage extends Storage<S3Options> {
     return AmazonS3Storage.connections.find(i => i.name == this.name)
   }
 
-  public info(objectPath: string): Promise<object> {
-    return Promise.resolve({})
+  public async info(objectPath: string): Promise<object> {
+    // return Promise.resolve({})
+    let conn = this.getConnection()
+    if (!conn) return {}
+    let v = <GetObjectRequest>{
+      Bucket: conn.bucket,
+      Key: objectPath
+    }
+    return (await conn.conn.headObject(v).promise())
+  }
+
+  public async fileSize(filePath: string) {
+    let conn = this.getConnection()
+    if (!conn) return 0
+    let v = <GetObjectRequest>{
+      Bucket: conn.bucket,
+      Key: filePath
+    }
+    return (await conn.conn.headObject(v).promise()).ContentLength || 0
+  }
+
+  public async readStream(filePath: string, options: object & { start?: number, end?: number, fileSize?: number } = {}) {
+    let conn = this.getConnection()
+    let passThrough = new PassThrough
+    if (!conn) return passThrough
+    let v = <GetObjectRequest>{
+      Bucket: conn.bucket,
+      Key: filePath,
+    }
+    if (options) {
+      let range: (number | string)[] = []
+      if (options.start) range.push(options.start)
+      else range.push(0)
+      if (options.end) range.push(options.end)
+      else range.push(options.fileSize || '')
+      v.Range = 'bytes=' + range.join('-')
+    }
+    // if (options) v = Object.assign(v, options)
+    conn.conn.getObject(v).createReadStream().pipe(passThrough)
+    return passThrough
   }
 
 }

@@ -3,6 +3,8 @@ import { getConfig, log } from '@horsepower/server'
 import { StorageSettings } from '.'
 import { FileConfiguration } from './drivers/file'
 import { URL } from 'url'
+import { ReadStream, WriteStream } from 'fs'
+import { PassThrough } from 'stream'
 
 export interface StorageDisk {
   driver: string,
@@ -251,6 +253,7 @@ export abstract class Storage<OptionsType extends object>  {
    * @returns {Promise<boolean>}
    */
   public abstract async write(filePath: string, data: string | Buffer, options?: object): Promise<boolean>
+  // public abstract writeStream(filePath: string, options?: object): WriteStream
   /**
    * Loads a file from file storage
    *
@@ -259,6 +262,7 @@ export abstract class Storage<OptionsType extends object>  {
    * @returns {(Promise<Buffer>)}
    */
   public abstract async read(filePath: string, options?: object): Promise<Buffer>
+  public abstract readStream(filePath: string, options?: object): PassThrough | Promise<PassThrough>
   /**
    * Deletes a file from storage
    *
@@ -341,4 +345,5 @@ export abstract class Storage<OptionsType extends object>  {
    * @memberof Storage
    */
   public abstract info(filePath: string): Promise<object | null>
+  public abstract fileSize(filePath: string): Promise<number>
 }

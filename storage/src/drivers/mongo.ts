@@ -1,5 +1,5 @@
 import { Storage } from '..'
-import { Readable } from 'stream'
+import { Readable, PassThrough } from 'stream'
 
 let mongo
 try {
@@ -274,7 +274,32 @@ export default class MongoStorage extends Storage<MongoOptions> {
     return MongoStorage.connections.find(c => c.name == name)
   }
 
-  public info(objectPath: string): Promise<object> {
-    return Promise.resolve({})
+  public async info(objectPath: string): Promise<object> {
+    // return Promise.resolve({})
+    let conn = this.getConnection(this.name)
+    if (!conn) return {}
+    let file = await this.findFile(conn, objectPath)
+    if (file) {
+      return file
+    }
+    return {}
+  }
+
+  public async fileSize(filePath: string) {
+    let conn = this.getConnection(this.name)
+    if (!conn) return 0
+    let file = await this.findFile(conn, filePath)
+    if (file) {
+      return file.length
+    }
+    return 0
+  }
+
+  public async readStream(filePath: string, options?: { start: number, end: number }) {
+    let conn = this.getConnection(this.name)
+    let passThrough = new PassThrough
+    if (!conn) return passThrough
+    let file = await this.findFile(conn, filePath)
+    return file ? conn.bucket.openDownloadStream(file._id, options).pipe(passThrough) : passThrough
   }
 }

@@ -1,5 +1,6 @@
 import { OutgoingHttpHeaders } from 'http'
 import { Router } from '@horsepower/router'
+import { Storage } from '@horsepower/storage'
 import { Client } from './Client'
 
 export interface CookieOptions {
@@ -17,9 +18,14 @@ export interface Cookie {
   value: string
 }
 
+export interface FileStoreResponse {
+  store: Storage<any>
+  file: string
+}
+
 export class Response {
 
-  private _filePath: string | null = null
+  private _fileStore: FileStoreResponse | null = null
   private _templatePath: string | null = null
   private _loadFromCache: boolean = false
   private _cacheTTL: number = -1
@@ -36,7 +42,7 @@ export class Response {
   public get headers(): OutgoingHttpHeaders { return this._headers }
   public get cookies(): (Cookie & CookieOptions)[] { return this._cookies }
   public get contentLength(): number { return this._length }
-  public get filePath(): string | null { return this._filePath }
+  public get fileStore(): FileStoreResponse | null { return this._fileStore }
   public get templatePath(): string | null { return this._templatePath }
   public get loadFromCache(): boolean { return this._loadFromCache }
   public get cacheTTL(): number { return this._cacheTTL }
@@ -99,8 +105,8 @@ export class Response {
    * @memberof Response
    * @internal
    */
-  public setFile(path: string) {
-    this._filePath = path
+  public setStore(store: Storage<any>, file: string) {
+    this._fileStore = { store, file }
     return this
   }
 
@@ -272,13 +278,10 @@ export class Response {
    * @returns
    * @memberof Response
    */
-  public download(name: string, path: string, code?: number): this
-  public download(name: string, path: string | Buffer, code: number = 200): this {
-    if (typeof path == 'string') this.setFile(path)
-    else if (path instanceof Buffer) this.setBuffer(path)
-    else return this
-    return this
-      .setCode(code)
+  public download(name: string, store: Storage<any>, path: string, code?: number): this
+  public download(...args: (string | Storage<any> | number | Buffer | undefined)[]): this {
+    let name = args.shift()
+    return this.file(...args)
       .setHeader('Content-Disposition', `attachment; filename="${name}"`)
   }
 
@@ -290,7 +293,7 @@ export class Response {
    * @returns {this}
    * @memberof Response
    */
-  public file(path: string, code?: number): this
+  public file(store: Storage<any>, path: string, code?: number): this
   /**
    * Sends a file to the client without downloading the file.
    *
@@ -300,9 +303,14 @@ export class Response {
    * @memberof Response
    */
   public file(data: Buffer, code?: number): this
-  public file(info: string | Buffer, code: number = 200) {
-    if (typeof info == 'string') this.setFile(info)
-    else if (info instanceof Buffer) this.setBuffer(info)
+  public file(info: Buffer | Storage<any>, a?: string | number, b: number = 200) {
+    let store = (info instanceof Storage ? info : null) as Storage<any>
+    let buffer = (info instanceof Buffer ? info : null) as Buffer
+    let path = (info instanceof Storage ? a : '') as string
+    let code = typeof a == 'number' ? a : b
+
+    if (store) this.setStore(store, path)
+    else if (buffer) this.setBuffer(buffer)
     return this.setCode(code)
   }
 

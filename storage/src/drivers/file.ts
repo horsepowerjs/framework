@@ -2,19 +2,31 @@ import { Storage } from '../Storage'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as mkdirp from 'mkdirp'
+import { PassThrough } from 'stream'
 
 export type FileConfiguration = {
   driver: 'file'
   root: string
 }
 
-export type FileOptions = {
+export type FileWriteOptions = {
   flags?: string;
   encoding?: string;
   fd?: number;
   mode?: number;
   autoClose?: boolean;
   start?: number;
+}
+
+export type FileReadOptions = {
+  flags?: string;
+  encoding?: string;
+  fd?: number;
+  mode?: number;
+  autoClose?: boolean;
+  start?: number;
+  end?: number;
+  highWaterMark?: number;
 }
 
 export interface FileStorage extends Storage<any> {
@@ -27,7 +39,7 @@ export interface FileStorage extends Storage<any> {
    * @param {object} [options] The save options for when saving the file
    * @returns {Promise<boolean>}
    */
-  write(filePath: string, data: string | Buffer, options?: FileOptions): Promise<boolean>
+  write(filePath: string, data: string | Buffer, options?: FileWriteOptions): Promise<boolean>
   /**
    * Loads a file from file storage
    *
@@ -35,7 +47,7 @@ export interface FileStorage extends Storage<any> {
    * @param {object} [options] The save options for when saving the file
    * @returns {(Promise<Buffer>)}
    */
-  read(filePath: string, options?: FileOptions): Promise<Buffer>
+  read(filePath: string, options?: FileWriteOptions): Promise<Buffer>
   /**
    * Deletes a file from storage
    *
@@ -129,13 +141,13 @@ export default class extends Storage<{}> {
    * @param {(string | Buffer)} data The data to save
    * @returns {Promise<boolean>}
    */
-  public write(filePath: string, data: string | Buffer, options?: FileOptions): Promise<boolean> {
+  public write(filePath: string, data: string | Buffer, options?: FileWriteOptions): Promise<boolean> {
     return new Promise(async resolve => {
       try {
         let dir = path.parse(<string>this.forceRoot(filePath)).dir
         await new Promise(r => mkdirp(dir, (err) => { err ? r(false) : r(true) }))
         let resource = this.forceRoot(filePath)
-        let writeStream: fs.WriteStream = fs.createWriteStream(resource, Object.assign<FileOptions, FileOptions | undefined>({ flags: 'w' }, options))
+        let writeStream: fs.WriteStream = fs.createWriteStream(resource, Object.assign<FileWriteOptions, FileWriteOptions | undefined>({ flags: 'w' }, options))
         writeStream.on('error', () => resolve(false))
         writeStream.on('close', () => resolve(true))
         writeStream.write(data)
@@ -146,19 +158,24 @@ export default class extends Storage<{}> {
     })
   }
 
+  public writeStream(filePath: string, options?: FileWriteOptions) {
+    let url = this.forceRoot(filePath).toString()
+    return fs.createWriteStream(url, options)
+  }
+
   /**
    * Loads a file from file storage
    *
    * @param {string} filePath The location of the file/directory
    * @returns {(Promise<Buffer>)}
    */
-  public read(filePath: string): Promise<Buffer> {
+  public read(filePath: string, options?: FileReadOptions): Promise<Buffer> {
     return new Promise(resolve => {
       try {
         let chunks: any[] = []
         let resource = this.forceRoot(filePath)
         let url = resource.toString()
-        let readStream = fs.createReadStream(url)
+        let readStream = fs.createReadStream(url, options)
         readStream.on('data', (data) => chunks.push(data))
         readStream.on('end', () => readStream.destroy())
         readStream.on('close', () => resolve(Buffer.concat(chunks)))
@@ -166,6 +183,10 @@ export default class extends Storage<{}> {
         resolve(Buffer.from(''))
       }
     })
+  }
+
+  public readStream(filePath: string, options?: FileReadOptions) {
+    return fs.createReadStream(this.toPath(filePath), options).pipe(new PassThrough)
   }
 
   /**
@@ -304,6 +325,11 @@ export default class extends Storage<{}> {
         return resolve(stat)
       })
     })
+  }
+
+  public async fileSize(filePath: string): Promise<number> {
+    let info = await this.info(filePath)
+    return info && info.size || -1
   }
 
   /**

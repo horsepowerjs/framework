@@ -12,6 +12,7 @@ import langBlock from '../directives/element/lang'
 import csrfBlock from '../directives/element/csrf'
 import caseBlock from '../directives/element/case'
 import { includeBlock, requireBlock } from '../directives/element/include'
+import cachedBlock from '../directives/element/cached'
 
 // The element template attribute directives
 import hideAttr from '../directives/attribute/hide'
@@ -130,6 +131,9 @@ export async function step(context: Context, client: Client, root: Template, nod
           return await step(context, client, root, node)
         case 'require':
           await requireBlock(context, client, root, child)
+          return await step(context, client, root, node)
+        case 'cached':
+          await cachedBlock(context, client, root, child)
           return await step(context, client, root, node)
         case 'block':
           await block(context, client, root, child)
