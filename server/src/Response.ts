@@ -281,7 +281,7 @@ export class Response {
   public download(name: string, store: Storage<any>, path: string, code?: number): this
   public download(...args: (string | Storage<any> | number | Buffer | undefined)[]): this {
     let name = args.shift()
-    return this.file(...args)
+    return this.file(...args as [any, any, any])
       .setHeader('Content-Disposition', `attachment; filename="${name}"`)
   }
 
