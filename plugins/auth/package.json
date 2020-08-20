@@ -14,7 +14,7 @@
         "@horsepower/router": "^1.0.0",
         "@horsepower/server": "^1.0.0",
         "@horsepower/session": "^1.0.0",
-        "bcrypt": "^3.0.6"
+        "bcrypt": "^5.0.0"
     },
     "license": "ISC",
     "files": [
